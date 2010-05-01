@@ -40,7 +40,7 @@ it("should be optional to pass a superclass",
    end)
 it("should raise an error if the superclass is undefined",
    function()
-      code = pcall(klass = Class{'WithUndefinedSuperclass', Undefined })
+      code = pcall(Class{'WithUndefinedSuperclass', Undefined })
       return code == false
    end)
 it("should be ok to have one attribute",

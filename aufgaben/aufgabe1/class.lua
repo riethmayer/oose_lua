@@ -1,29 +1,34 @@
+-- a find method
+function find(o,k)
+   if(o._attributes[k]) then
+      return o._attributes[k]
+   else
+      if(o._name[k]) then
+         return o._name[k]
+      else
+         return delegate(o,k)
+      end
+   end
+end
+-- the class itself
 function Class(arg)
-   local klass       = {}
+   local klass = {}
    klass._name       = arg[1]
    klass._super      = to_class(arg[2])
    klass._attributes = {}
    -- cleanup used arguments
    arg[1], arg[2]  = nil, nil
-   -- metatable
-   local mt = {
+   local meta = {
       __index = function(o,k)
-                   if(o._attributes[k]) then
-                      return o._attributes[k]
-                   else
-                      if(o._name[k]) then
-                         return o._name[k]
-                      else                         
-                         return nil --o._super[k] 
-                      end
-                   end
+                   return find(o,k)
                 end,
       __tostring = function(o)
                       return o._name
                    end
    }
+   
    -- add some functionality to our class
-   setmetatable(klass, mt)
+   setmetatable(klass, meta)
    -- publish class before assigning attributes, to enable recursive definitions
    _G[klass._name] = klass
    -- now assign attributes
@@ -69,5 +74,17 @@ function is_valid_attribute(attributes, name, klass)
       return false
    else
       return true
+   end
+end
+-- delegate field to superclass
+function delegate(object, key)
+   if object then
+      if rawget(object,_super) then
+         return object._super[key]
+      else
+         return nil
+      end
+   else
+      return nil
    end
 end

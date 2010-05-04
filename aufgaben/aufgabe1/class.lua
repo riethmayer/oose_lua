@@ -40,11 +40,11 @@ function Class(arg)
 end
 -- receives a string, returns a class or nil, if undefined.
 function to_class(klass)
-   if(is_valid_class(klass)) then 
-      return _G[klass]                       
+   if(is_valid_class(klass)) then
+      return _G[klass]
    else
       -- TODO how to return an error? This doesn't work.
-      if(type(klass) ~= "nil") then 
+      if(type(klass) ~= "nil") then
          error("unsupported Class definition")
       else
          return nil
@@ -53,8 +53,11 @@ function to_class(klass)
 end
 -- lookup in global namespace
 function is_valid_class(klass)
+   if klass == nil then
+      return false
+   end
    klass = tostring(klass)
-   if(type(_G[klass]) == "table") then 
+   if(type(_G[klass]) == "table") then
       return true
    else
       return false

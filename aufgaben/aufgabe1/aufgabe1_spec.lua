@@ -61,7 +61,11 @@ it("should be a valid class if it has been constructed with Class already",
       Class{'Car'}
       return is_valid_class("Car") and is_valid_class(Car)
    end)
-
+it("should not be a valid class if it is something weird",
+   function()
+      code = pcall(to_class,2)
+      return code == false
+   end)
 it("should be ok to have one attribute",
    function()
       Class{'String'}
@@ -70,39 +74,54 @@ it("should be ok to have one attribute",
    end)
 it("should be ok to have two attributes",
    function()
-      klass = Class{'WithOneAttribute', nil,
-                    attribute1 = Boolean:new(true),
-                    attribute2 = Boolean:new(true)}
-      return klass.attribute1 == true and klass.attribute2 == true
+       Class{'WithTwoAttributes', nil,
+                    attribute1 = Boolean,
+                    attribute2 = Boolean}
+      return WithTwoAttributes.attribute1 == Boolean and 
+         WithTwoAttributes.attribute2 == Boolean
    end)
 it("should be possible to pass a Number as attribute",
    function()
-      klass = Class{'WithNumberAttribute', nil, number = Number}
-      return klass.number == Number
+      Class{'WithNumberAttribute', nil, number = Number}
+      return WithNumberAttribute.number == Number
    end)
 it("should be possible to pass a Boolean as attribute",
    function()
-      klass = Class{'WithBooleanAttribute', nil, boolean = Boolean}
-      return klass.boolean == Boolean
+      Class{'WithBooleanAttribute', nil, boolean = Boolean}
+      return WithBooleanAttribute.boolean == Boolean
    end)
-it("should add MyClass as empty table automagically",
+it("should add MagicClass to global context before attribute assignment",
    function()
-      -- hmm how to test this? Before the attribute is assigned
-      -- MyClass must be known as valid class already
-      klass = Class({'MyClass', nil, automagic = MyClass })
-      return klass.automagic == MyClass
+      MagicClass = nil
+      Class{'MagicClass', automagic = MagicClass }
+      return MagicClass.automagic == MagicClass
    end)
 it("should not be possible to override an attribute with different type",
    function()
       Class{'Super', nil, stringy = String}
-      c = pcall(Class{'Duper', Super, stringy = Number})
-      return c == false
+      Class{'Duper', Super, stringy = Number}
+      -- TODO this should have a try catch block
+      -- return true if catched, false otherwise
+      return false
    end)
-it("should not be possible to override an attribute with different type",
+it("should be possible to override an attribute with same type",
    function()
-      Class{'Super', nil, stringy = String}
-      c = pcall(Class{'Duper', Super, stringy = String})
-      return c == true
+      Class{'Super', nil,   stringy = String}
+      Class{'Duper', Super, stringy = String}
+      return true
    end)
+it("should delegate methods to superclass",
+   function()
+      Class{'Fahrzeug', marke = String, baujahr = Number}
+      function Fahrzeug:schrottreif(jahr)
+         return (self.baujahr + 10) > jahr
+      end
+      Class{"Motorrad", Fahrzeug, ersatzFahrzeug = Motorrad}
+      ka = Motorrad:new()
+      ka.marke = 'Kawasaki'
+      ka.baujahr = 1999
+      return ka:schrottreif(2020) == true
+   end)
+
 
 LSpec:teardown()

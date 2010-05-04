@@ -5,28 +5,38 @@ function Class(arg)
    klass._attributes = {}
    -- cleanup used arguments
    arg[1], arg[2]  = nil, nil
-   for k,v in pairs(arg) do
-      if(is_valid_class(v) and is_valid_attribute(klass._attributes, k, v)) then
-         klass._attributes[k] = v
-      end
-   end
+   -- metatable
    local mt = {
       __index = function(o,k)
                    if(o._attributes[k]) then
                       return o._attributes[k]
                    else
-                      return o._name[k]
+                      if(o._name[k]) then
+                         return o._name[k]
+                      else                         
+                         return nil --o._super[k] 
+                      end
                    end
                 end,
       __tostring = function(o)
                       return o._name
                    end
    }
+   -- add some functionality to our class
    setmetatable(klass, mt)
+   -- publish class before assigning attributes, to enable recursive definitions
+   _G[klass._name] = klass
+   -- now assign attributes
+   for k,v in pairs(arg) do
+      if(is_valid_class(v) and is_valid_attribute(klass._attributes, k, v)) then
+         klass._attributes[k] = v
+      end
+   end
+   -- class functions
+   -- hmm there should be some validations for attribute assignment then right?
    klass.new = function()
                   return klass
                end
-   _G[klass._name] = klass
 end
 -- receives a string, returns a class or nil, if undefined.
 function to_class(klass)

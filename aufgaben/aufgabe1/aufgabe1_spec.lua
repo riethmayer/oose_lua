@@ -20,57 +20,23 @@ require 'class'
 LSpec:setup()
 
 -- The following tests reflect the requirements for aufgabe1.
-
 it("should add 'MyClass' to the global context",
    function()
-      klass = Class{'MyClass',Whateva,
-                    attribute1 = String,
-                    attribute2 = MyClass }
+      klass = Class{'MyClass', attribute1 = String, attribute2 = MyClass }
+      assert(klass.classname == "MyClass")
       return _G['MyClass'] ~= nil
-   end)
-it("should return nil for to_class(Undefined)",
-   function()
-      return to_class(Undefined) == nil
-   end)
-it("should return class if class is defined",
-   function()
-      Class{'String'}
-      return to_class("String") == String
    end)
 it("should be optional to pass a superclass",
    function()
       Class{'WithoutSuperclass'}
-      -- the topmost Object should be Object? or Nil?
-      return WithoutSuperclass._super == nil
-   end)
-it("should be a valid attribute for empty attribute definitions in classes",
-   function()
-      return is_valid_attribute({}, 'attr1', 'String')
-   end)
-it("should not be valid to have the same attribute name with different types",
-   function()
-      local t = {attr1 = "Boolean"}
-      return is_valid_attribute(t, 'attr1', 'String') == false
-   end)
-it("should not be a valid class if it hasn't been constructed with Class already",
-   function()
-      return (is_valid_class("Car") == false) and (is_valid_class(Car) == false)
-   end)
-it("should be a valid class if it has been constructed with Class already",
-   function()
-      Class{'Car'}
-      return is_valid_class("Car") and is_valid_class(Car)
-   end)
-it("should not be a valid class if it is something weird",
-   function()
-      code = pcall(to_class,2)
-      return code == false
+      -- the topmost Object should be Object
+      return WithoutSuperclass.super == Object
    end)
 it("should be ok to have one attribute",
    function()
       Class{'String'}
       Class{'WithOneAttribute', attribute1 = String}
-      return WithOneAttribute.attribute1 == String
+      return WithOneAttribute.attributes.attribute1 == String
    end)
 it("should be ok to have two attributes",
    function()

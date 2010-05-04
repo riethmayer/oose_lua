@@ -39,7 +39,7 @@ it("should return class if class is defined",
    end)
 it("should be optional to pass a superclass",
    function()
-      Class{'WithoutSuperclass', nil}
+      Class{'WithoutSuperclass'}
       -- the topmost Object should be Object? or Nil?
       return WithoutSuperclass._super == nil
    end)
@@ -113,11 +113,13 @@ it("should be possible to override an attribute with same type",
 it("should delegate methods to superclass",
    function()
       Class{'Fahrzeug', marke = String, baujahr = Number}
+      assert(Fahrzeug)
       function Fahrzeug:schrottreif(jahr)
          return (self.baujahr + 10) > jahr
       end
       Class{"Motorrad", Fahrzeug, ersatzFahrzeug = Motorrad}
       ka = Motorrad:new()
+      assert(ka._super == Fahrzeug)
       ka.marke = 'Kawasaki'
       ka.baujahr = 1999
       return ka:schrottreif(2020) == true

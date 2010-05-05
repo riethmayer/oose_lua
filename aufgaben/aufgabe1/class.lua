@@ -43,13 +43,8 @@ function Class(argv)
    -- calls are delegated to class new instead
    setmetatable(klass,{
                    __index = function(self,key)
-                                if self.classname[key] then
-                                   return self.classname[key]
-                                else
-                                   return self.super[key]
-                                end
-                             end,
-                   __call  = function(self, ...) return self.new(self,unpack(arg)) end
+                                return self.classname[key] or self.super[key]
+                             end
                 })
    -- if instance method unavailable, check super class methods
    setmetatable(klass.methods,{

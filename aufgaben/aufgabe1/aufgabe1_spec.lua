@@ -80,16 +80,14 @@ it("should delegate methods to superclass",
    function()
       Class{'Fahrzeug', marke = String, baujahr = Number}
       assert(Fahrzeug)
-      function Fahrzeug:schrottreif(jahr)
-         return (self.baujahr + 10) > jahr
+      function Fahrzeug:is_japanese(jahr)
+         return self.marke == 'Kawasaki'
       end
       Class{"Motorrad", Fahrzeug, ersatzFahrzeug = Motorrad}
       ka = Motorrad:new()
-      assert(ka._super == Fahrzeug)
       ka.marke = 'Kawasaki'
       ka.baujahr = 1999
-      return ka:schrottreif(2020) == true
+      return ka:is_japanese() == true
    end)
-
 
 LSpec:teardown()

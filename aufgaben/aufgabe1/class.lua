@@ -1,86 +1,82 @@
--- a find method
-function find(o,k)
-   if(o.attributes[k]) then
-      return o.attributes[k]
+-- Basic Object behavior which will be default behavior.
+Object = {
+   super = nil,
+   classname  = "Object",
+   new    = function(class)
+               assert( nil ~= class)
+               local object = {class = class}
+               local meta   = {
+                  __index   = function(self,key) return class.methods[key] end
+               }
+               setmetatable(object,meta)
+               return object
+            end,
+   methods= { classname = function(self) return(self.class.classname) end }
+}
+
+function Class(argv)
+   -- check for a class name
+   if((not argv[1]) or (type(argv[1]) ~= "string")) then
+      error("Undefined class name. Usage: Class{'ClassName'}")
    else
-      if(o.name[k]) then
-         return o.name[k]
-      else
-         return delegate(o,k)
-      end
+      classname = argv[1]
    end
-end
--- the class itself
-function Class(arg)
-   local klass = {}
-   klass.name       = arg[1]
-   klass.super      = to_class(arg[2])
-   klass.attributes = {}
-   -- cleanup used arguments
-   arg[1], arg[2]  = nil, nil
-   local meta = {
-      __index = function(o,k)
-                   return find(o,k)
-                end,
-      __tostring = function(o)
-                      return o.name
-                   end
-   }
    
-   -- add some functionality to our class
-   setmetatable(klass, meta)
-   -- publish class before assigning attributes, to enable recursive definitions
-   _G[klass.name] = klass
-   -- now assign attributes
-   for k,v in pairs(arg) do
-      if(is_valid_class(v) and is_valid_attribute(klass.attributes, k, v)) then
-         klass.attributes[k] = v
+   -- check for a super class
+   -- TODO validate argv[2] as a real class
+   local super = argv[2] or Object
+   
+   -- define the class
+   local klass = {
+      super = super;
+      classname  = classname;
+      new    = function(self, ...)
+                  local obj = super.new(self);
+                  setmetatable(obj, {__index = function(self, key)
+                                                  return self.class[key]
+                                               end
+                                  });
+                  return obj
+               end,
+      methods = {},
+      attributes = setattributes(super, argv)
+   }
+   -- delegation for class table access
+   -- calls are delegated to class new instead
+   setmetatable(klass,{
+                   __index = function(self,key)
+                                return self.classname[key] or self.super[key]
+                             end
+                })
+   -- if instance method unavailable, check super class methods
+   setmetatable(klass.methods,{
+                   __index = function(self,key) return klass.super.methods[key] end
+                })
+   _G[klass.classname] = klass
+   return klass
+end
+
+function setattributes(super,argv)
+   argv[1] = nil -- name is the 1st parameter
+   argv[2] = nil -- superclass is the 2nd parameter
+   -- other parameters are tables which define some classes
+   local result = super.attributes or {} -- a list with defined params
+   for param,klassname in pairs(argv) do
+      if class_exists(klassname) and not_yet_defined(result,param, klassname) then
+         result[param] = klassname
       end
    end
-   -- class functions
-   -- hmm there should be some validations for attribute assignment then right?
-   klass.new = function()
-                  return klass
-               end
+   return result
 end
--- receives a string, returns a class or nil, if undefined.
-function to_class(klass)
-   if(is_valid_class(klass)) then
-      return _G[klass]
-   else
-      -- TODO how to return an error? This doesn't work.
-      if(type(klass) ~= "nil") then
-         error("unsupported Class definition")
-      else
-         return nil
-      end
-   end
+
+function class_exists(klassname)
+   return type(klassname) == "table"
 end
--- lookup in global namespace
-function is_valid_class(klass)
-   if klass == nil then
-      return false
-   end
-   klass = tostring(klass)
-   if(type(_G[klass]) == "table") then
-      return true
-   else
-      return false
-   end
-end
--- returns false if attributes contains a defined attribute with mismatching class
-function is_valid_attribute(attributes, name, klass)
-   if(attributes[name] and attributes[name] ~= klass) then
+
+function not_yet_defined(given, param, klassname)
+   if(given and given.param and given.param == klassname) then
       return false
    else
       return true
-   end
-end
--- delegate field to superclass
-function delegate(object, key)
-   if object and rawget(object,super) then
-      return object.super[key]
-   else
-      return nil
    end
 end

@@ -21,6 +21,7 @@ function Class(argv)
    else
       classname = argv[1]
    end
+   
    -- check for a super class
    -- TODO validate argv[2] as a real class
    local super = argv[2] or Object
@@ -31,6 +32,10 @@ function Class(argv)
       classname  = classname;
       new    = function(self, ...)
                   local obj = super.new(self);
+                  setmetatable(obj, {__index = function(self, key)
+                                                  return self.class[key]
+                                               end
+                                  });
                   return obj
                end,
       methods = {},

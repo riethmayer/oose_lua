@@ -22,12 +22,9 @@ function Class(argv)
       classname = argv[1]
    end
    -- check for a super class
-   if(argv[2] == nil) then
-      super = Object
-   else
-      -- TODO validate argv[2] as a real class
-      super = argv[2]
-   end
+   -- TODO validate argv[2] as a real class
+   local super = argv[2] or Object
+   
    -- define the class
    local klass = {
       super = super;

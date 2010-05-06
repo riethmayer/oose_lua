@@ -22,7 +22,7 @@ LSpec:setup()
 -- The following tests reflect the requirements for aufgabe1.
 it("should add 'MyClass' to the global context",
    function()
-      klass = Class{'MyClass', attribute1 = String, attribute2 = MyClass }
+      local klass = Class{'MyClass', attribute1 = String, attribute2 = MyClass }
       assert(klass.classname == "MyClass")
       return _G['MyClass'] ~= nil
    end)

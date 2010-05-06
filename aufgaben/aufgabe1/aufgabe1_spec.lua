@@ -30,12 +30,12 @@ it("should be optional to pass a superclass",
    function()
       Class{'WithoutSuperclass'}
       -- the topmost Object should be Object
-      return WithoutSuperclass.super == Object
+      return WithoutSuperclass._super == Object
    end)
 it("should be ok to have one attribute",
    function()
-      Class{'String'}
-      Class{'WithOneAttribute', attribute1 = String}
+      Class{'ObjectWithOneAttribute'}
+      Class{'WithOneAttribute', attribute1 = ObjectWithOneAttribute}
       return WithOneAttribute.attributes.attribute1 == String
    end)
 it("should be ok to have two attributes",

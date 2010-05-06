@@ -64,18 +64,29 @@ it("should add MagicClass to global context before attribute assignment",
    end)
 it("should not be possible to override an attribute with different type",
    function()
-      Class{'Super', nil, stringy = String}
-      Class{'Duper', Super, stringy = Number}
-      -- TODO this should have a try catch block
-      -- return true if catched, false otherwise
-      return false
+      Class{'FirstType'}
+      Class{'SecondType'}
+      Class{'Super', nil, first = FirstType}
+      local code = pcall(Class, {'Duper', Super, first = SecondType})
+      return code == false
    end)
 it("should be possible to override an attribute with same type",
    function()
-      Class{'Super', nil,   stringy = String}
-      Class{'Duper', Super, stringy = String}
-      return true
+      Class{'Existing'}
+      Class{'SuperExisting', nil, with_existing = Existing}
+      local code = pcall(Class, 
+                         {'DuperExisting', SuperExisting, with_existing = Existing})
+      return code
    end)
+it("should be possible to override an attribute with same type and add more",
+   function()
+      Class{'AA'}
+      Class{'BB'}
+      Class{'WithAA', first = AA}
+      local code = pcall(Class,{'WithBB', WithAA, first = AA, second = BB})
+      return code
+   end)
+
 it("should delegate methods to superclass",
    function()
       Class{'Fahrzeug', marke = String, baujahr = Number}
@@ -84,10 +95,84 @@ it("should delegate methods to superclass",
          return self.marke == 'Kawasaki'
       end
       Class{"Motorrad", Fahrzeug, ersatzFahrzeug = Motorrad}
-      ka = Motorrad:new()
+      local ka = Motorrad:new()
       ka.marke = 'Kawasaki'
       ka.baujahr = 1999
       return ka:is_japanese() == true
+   end)
+it("should raise an error if an unsupported attribute type is used",
+   function()
+      local code = pcall(Class,{"FehlerKlasse", falschesAttribut = unbekannterTyp})
+      return code == false
+   end)
+it("should raise an error if a super class has a cylic dependency ",
+   function()
+      Class{'A'}
+      Class{'B', A}
+      local call = pcall(Class,{'A', B})
+      return call == false
+   end)
+it("should raise an error if a super class is not a LOS class",
+   function()
+      local something = 4
+      local code = pcall(Class, {'LOSClassWithInvalidSuperclass', something})
+      return code == false
+   end)
+it("should define the basic string class",
+   function()
+      local s = String:new()
+      return s.classname == "String"
+   end)
+it("should define the basic boolean class",
+   function()
+      local b = Boolean:new()
+      return b.classname == "Boolean"
+   end)
+it("should define the basic number class",
+   function()
+      local n = Number:new()
+      return n.classname == "Number"
+   end)
+it("should initialize number with 0",
+   function()
+      Class{'WithZeroInitialized', number = Number}
+      local n = WithZeroInitialized:new()
+      return n.number == 0
+   end)
+it("should initialize String with ''",
+   function()
+      Class{'WithStringInitialized', string = String}
+      local s = WithStringInitialized:new()
+      return s.string == ''
+   end)
+it("should initialize Boolean with false",
+   function()
+      Class{'WithBooleanInitialized', bool = Boolean}
+      local b = WithBooleanInitialized:new()
+      return b.bool == false
+   end)
+it("should initialize a reference with nil",
+   function()
+      Class{'AAA'}
+      Class{'WithReferenceInitialized', ref = AAA}
+      local r = WithReferenceInitialized:new()
+      return r.ref == nil
+   end)
+it("should give attributes a higher priority than methods",
+   function()
+      Class{'ClassWithMethod'}
+      Class{'ClassWithAttribute', ClassWithMethod, action = String}
+      local cwa = ClassWithAttribute:new()
+      cwa.action = "attribute"
+      function ClassWithMethod:action()
+         return "method"
+      end
+      local action_is_string = type(cwa.action == "string")
+      function ClassWithAttribute:action()
+         return "another method"
+      end
+      local attribute_has_priority = type(cwa.action == "string")
+      return action_is_string and attribute_has_priority
    end)
 
 LSpec:teardown()

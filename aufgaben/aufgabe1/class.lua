@@ -1,17 +1,17 @@
 -- Basic Object behavior which will be default behavior.
 Object = {
-   super = nil,
+   _super = nil,
    classname  = "Object",
-   new    = function(class)
-               assert( nil ~= class)
-               local object = {class = class}
+   new    = function(_class)
+               assert( nil ~= _class)
+               local object = {_class = _class}
                local meta   = {
-                  __index   = function(self,key) return class.methods[key] end
+                  __index   = function(self,key) return _class.methods[key] end
                }
                setmetatable(object,meta)
                return object
             end,
-   methods= { classname = function(self) return(self.class.classname) end }
+   methods= { classname = function(self) return(self._class.classname) end }
 }
 
 function Class(argv)
@@ -24,43 +24,43 @@ function Class(argv)
    
    -- check for a super class
    -- TODO validate argv[2] as a real class
-   local super = argv[2] or Object
+   local _super = argv[2] or Object
    
    -- define the class
    local klass = {
-      super = super;
+      _super = _super;
       classname  = classname;
       new    = function(self, ...)
-                  local obj = super.new(self);
+                  local obj = _super.new(self);
                   setmetatable(obj, {__index = function(self, key)
-                                                  return self.class[key]
+                                                  return self._class[key]
                                                end
                                   });
                   return obj
                end,
       methods = {},
-      attributes = setattributes(super, argv)
+      attributes = setattributes(_super, argv)
    }
    -- delegation for class table access
-   -- calls are delegated to class new instead
    setmetatable(klass,{
                    __index = function(self,key)
-                                return self.classname[key] or self.super[key]
+                                return self.classname[key] or self._super[key]
                              end
                 })
    -- if instance method unavailable, check super class methods
+   -- this way it's cleaner to define methods within one container.
    setmetatable(klass.methods,{
-                   __index = function(self,key) return klass.super.methods[key] end
+                   __index = function(self,key) return klass._super.methods[key] end
                 })
    _G[klass.classname] = klass
    return klass
 end
 
-function setattributes(super,argv)
+function setattributes(_super,argv)
    argv[1] = nil -- name is the 1st parameter
    argv[2] = nil -- superclass is the 2nd parameter
    -- other parameters are tables which define some classes
-   local result = super.attributes or {} -- a list with defined params
+   local result = _super.attributes or {} -- a list with defined params
    for param,klassname in pairs(argv) do
       if class_exists(klassname) and not_yet_defined(result,param, klassname) then
          result[param] = klassname

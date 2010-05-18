@@ -36,7 +36,7 @@ it("should be ok to have one attribute",
    function()
       Class{'ObjectWithOneAttribute'}
       Class{'WithOneAttribute', attribute1 = ObjectWithOneAttribute}
-      return WithOneAttribute.attributes.attribute1 == ObjectWithOneAttribute
+      return WithOneAttribute._attributes.attribute1 == ObjectWithOneAttribute
    end)
 it("should be ok to have two attributes",
    function()

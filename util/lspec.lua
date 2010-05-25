@@ -16,7 +16,10 @@ end
 
 function it(text, block)
    code, ErrorString = pcall(block)
-   
+   local lspec_env_missing = "LSpec: initialize the test block with LSpec:setup() and end it with LSpec:teardown()"
+   if LSpec.test_results == nil or LSpec.errors == nil then
+      error(lspec_env_missing)
+   end
    if code then
       if ErrorString then
          LSpec.test_results = LSpec.test_results .. "."

@@ -3,7 +3,7 @@ function Aspect(params)
    local aspect_name = params[1]
    validate_presence_of_attributes(params)
    local aspect = {
-      __index = 
+      __index = nil
    }
    
    publish(aspect_name,aspect)

@@ -64,8 +64,8 @@ it("should instantiate an object, so this can access its class methods",
 ----------------------------------------------------------------------------------
 it("should instantiate an object with superclass",
    function()
-      local o = Instance:new(Bar)
-      return (o.bar == "bar")
+      local b = Instance:new(Bar)
+      return (b.foo() == "foo")
    end)
 
 ----------------------------------------------------------------------------------

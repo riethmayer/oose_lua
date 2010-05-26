@@ -8,7 +8,8 @@ Object = {
    _super = nil,
    _class_methods = {
       classname  = "Object"
-   }
+   },
+   _class_attributes = {}
 }
 -- delegate to its class class methods
 local class_method_lookup = {

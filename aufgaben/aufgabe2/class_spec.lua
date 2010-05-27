@@ -86,9 +86,9 @@ it("should add MagicClass to global context before attribute assignment",
 it("should initialize basic intance variables",
    function()
       Foo = nil
-      Class{'Foo', id = Number}
-      f = Foo:new()      
-      return f.id == 0
+      Class{'Foo', id = Number, flag == Boolean, msg = String}
+      f = Foo:new()
+      return f.id == 0 and flag == false and msg == ""
    end)
 ----------------------------------------------------------------------------------
 it("should respond to classname",

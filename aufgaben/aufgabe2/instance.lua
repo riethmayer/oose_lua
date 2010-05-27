@@ -20,7 +20,9 @@ function Instance.new(klass,params)
    }
    -- instance doesn't know how to respond? Then it asks it class.
    local instance_method_lookup = {
-      __index = self._instance_variables,
+      __index = function(self,key)
+                   return self._instance_variables[key]
+                end,
       __newindex = function(self,key, value)
                       validate_type_safe(self,key,value)
                       self._instance_variables[key] = value

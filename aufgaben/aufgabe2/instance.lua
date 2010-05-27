@@ -7,56 +7,37 @@ Instance = {}
 -- klass is the 'Foo' in Foo:new()
 -- params for Foo:new(6) in case we'll allow parameterized instantiation
 function Instance.new(klass,params)
-   -- allow object instantiation
+   -- forward object instantiation to object itself
    if klass == Object then
       local o = Object:new()
       return o
    end
-   -- the object with it's class and superclass
-   local object = {
+   -- instance is a member of klass   
+   local instance = {
       _class = klass,
-      _super = validate_superclass(klass,params),
+      -- hmm _super is available through class
+      -- a:super() is required, which should hold an instance of its super class?
+      -- _super = klass._super,
+      -- foo.id is an instance variable
+      -- its located in instance variables:
       _instance_variables = {}
    }
-   -- instance doesn't know how to respond? Then it asks it class.
-   local instance_method_lookup = {
-      __index = function(self,key)
-                   return self._instance_variables[key]
-                end,
-      __newindex = function(self,key, value)
-                      validate_type_safe(self,key,value)
-                      self._instance_variables[key] = value
-                   end
-   }                     
-   local class_method_lookup = {
-      __index = function(self,key)
-                   return self._class[key]
-                end
-   }
-   -- delegation
-   setmetatable(object, instance_method_lookup)
-   setmetatable(object._instance_variables, class_method_lookup)
-   initialize(object,klass,params)
-   return object
+   -- help finding the instance variables
+   -- setmetatable(instance, instance._instance_variables)
+   -- delegate methods to its superclass
+   -- Account:new() => Instance.new(Account)
+   -- setmetatable(instance._instance_variables, klass)
+   -- klass.__index = klass
+   initialize(instance,klass,params)
+   return instance
 end
 ----------------------------------------------------------------------------------
--- checks wether the superclass responds to class, otherwise it defaults to object
-function validate_superclass(klass,params)
-   if(klass and klass._super and klass._super._class) then
-      return klass._super
-   else   
-      return Object
-   end
-end
-----------------------------------------------------------------------------------
-function validate_type_safe(object, key, value)
-   return true
-end
-----------------------------------------------------------------------------------
--- TODO maybe instantiation would be another topic belonging right into this file
 -- initialize the superclass with constructor
-function initialize(object, klass, params)
+-- the class has class_attributes: foo = Foo, bar = Bar
+-- so our instance needs o.foo = Foo:new() and o.bar = Bar:new()
+function initialize(instance, klass, params)
    for name, type in pairs(klass._class_attributes) do
-      object._instance_variables[name] = type:new()
+      local o = type:new()
+      instance._instance_variables[tostring(name)] = o
    end
 end

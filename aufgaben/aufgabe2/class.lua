@@ -1,4 +1,4 @@
-require 'instance'
+require 'basetypes'
 
 --  Usage: Class{'<classname>' [, <superclass>] [, <variable> = <type>]+ }
 --    * classname (mandatory):
@@ -23,14 +23,14 @@ require 'instance'
 --        Class{'Baz', Bar, foo = Bar } must return an error, as Foo and Bar have
 --        nothing in common.
 ----------------------------------------------------------------------------------
+-- adding not yet known classes to limbo
 _G_limbo_element = "unknown"
 _G_limbo = {}
-
 setmetatable(_G, { __index = function(self,key)
                                 _G_limbo[key] = _G_limbo_element
-                                return _G_limbo_element
+                                return "unknown"
                              end } )
-
+----------------------------------------------------------------------------------
 function Class(argv)
    local klass = {}
    klass.classname   = validate_classname(argv)
@@ -39,11 +39,23 @@ function Class(argv)
    klass._class_attributes = {}
    publish(klass) -- should be available to add limbo magic
    validate_attributes(klass, argv)
-   klass.new         = function(self, ...)
-                          return Instance.new(self, unpack(arg))
+   klass.new         = function(self, params)
+                          local instance = {}
+                          instance._class = self
+                          instance._instance_variables = {}
+                          local mt = {
+                             __index = function(name,key)
+                                          return self[key]
+                                       end
+                          }
+                          setmetatable(instance, mt)
+                          self.__index = self
+                          instance.classname= function(o)
+                             return o._class.classname
+                          end
+                          return instance
                        end
-   delegate_to_class_methods(klass)
-   delegate_to_superclass_methods(klass)
+   setmetatable(klass, klass._super)
    return klass
 end
 ----------------------------------------------------------------------------------
@@ -71,7 +83,7 @@ end
 function delegate_to_class_methods(klass)
    local meta = {}
    meta.__index    = function(self,key)
-                        return self._class_methods[key]
+                        return self._instance_methods and self._instance_methods[key] or self._class_methods[key]
                      end
    meta.__newindex = function(self,index,key)
                         self._class_methods[index] = key
@@ -141,8 +153,10 @@ end
 ----------------------------------------------------------------------------------
 -- Class{'Classname', foo = <Class> } => Classname._attributes = {foo = <Class>}
 -- Checks existence of <Class> and whether foo has been defined in Object already.
--- If foo has been defined in Object already, <Class> must be equal to or deriving from foo._class._super._attributes[foo].
--- Class{'Classname', Superclass, foo = <Class>} must check compatibility for Superclass and its superclass's attributes.
+-- If foo has been defined in Object already, <Class> must be equal to or 
+-- deriving from foo._class._super._attributes[foo].
+-- Class{'Classname', Superclass, foo = <Class>} must check compatibility for 
+-- Superclass and its superclass's attributes.
 ----------------------------------------------------------------------------------
 function is_superclass(type, klass)
    return type.classname == klass.classname or is_superclass(type._super, klass)

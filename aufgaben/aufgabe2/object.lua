@@ -8,10 +8,19 @@
 Object = {}
 Object._super = nil
 Object._classname = "Object"
-Object._class = Object
-function Object:classname()
-   return self._class and self._class._classname
-end
+Object._class_methods = {
+   classname = function(self)
+                  return self._classname
+               end
+}
+setmetatable(Object, {
+                __index = function(self, key)
+                             return Object._class_methods[key]
+                          end
+             })
+-- function Object:classname()
+--    return self._class and self._class._classname
+-- end
 ----------------------------------------------------------------------------------
 function Object:new()
    local object = {_class = self}

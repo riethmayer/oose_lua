@@ -16,12 +16,6 @@ it("should not be possible to create a class called Class",
       return success == false
    end)
 ----------------------------------------------------------------------------------
-it("should not be possible to create a class called Instance",
-   function()
-      success = pcall(Class,{'Instance'})
-      return success == false
-   end)
-----------------------------------------------------------------------------------
 it("should not be possible to create a class called Boolean",
    function()
       success = pcall(Class,{'Boolean'})
@@ -87,6 +81,21 @@ it("should add MagicClass to global context before attribute assignment",
       MagicClass = nil
       Class{'MagicClass', automagic = MagicClass }
       return MagicClass._class_attributes.automagic == MagicClass
+   end)
+----------------------------------------------------------------------------------
+it("should initialize basic intance variables",
+   function()
+      Foo = nil
+      Class{'Foo', id = Number}
+      f = Foo:new()      
+      return f.id == 0
+   end)
+----------------------------------------------------------------------------------
+it("should respond to classname",
+   function()
+      Foo = nil
+      Class{'Foo'}
+      return Foo:classname() == "Foo"
    end)
 ----------------------------------------------------------------------------------
 it("should not be possible to override an attribute with different type",

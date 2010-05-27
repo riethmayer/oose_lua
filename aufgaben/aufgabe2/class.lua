@@ -24,50 +24,42 @@ require 'basetypes'
 ----------------------------------------------------------------------------------
 -- adding not yet known classes to limbo
 _G_limbo_element = "unknown"
-_G_limbo_add_state = false
 _G_limbo = {}
 setmetatable(_G, { __index = function(self,key)
                                 _G_limbo[key] = _G_limbo_element
-                                if _G_limbo_add_state then
-                                   return _G_limbo_element
-                                else
-                                   return nil
-                                end
+                                return _G_limbo_element
                              end } )
 ----------------------------------------------------------------------------------
 function Class(argv)
    local klass = {}
+   -- checks for reserved words like Class, Object and so on.
    klass._classname  = validate_classname(argv)
    klass._super      = validate_superclass_or_default_to_object(argv)
-   klass._class_attributes = {}
-   publish(klass) -- should be available to add limbo magic
-   validate_attributes(klass, argv)
+   publish(klass)
+   klass._class_attributes = unpack_class_attributes(klass, argv)
    klass.new         = function(self, params)
                           local instance = klass._super.new(self)
-                          instance._instance_variables = {}
+                          local instance_variables = {}
                           for name, type in pairs(klass._class_attributes) do
-                             instance._instance_variables[name] = type:new()
+                             instance_variables[name] = type:new()
                           end
-                          setmetatable(instance, instance._instance_variables)
-                          setmetatable(instance._instance_variables, instance._class)
+                          local instance_delegation = {
+                             __index = function(self, key)
+                                          return instance_variables[key]
+                                       end
+                          }
+                          setmetatable(instance, instance_delegation)
+                          local class_delegation = {
+                             __index = function(self, key)
+                                          return klass.super[key]
+                                       end }
+                          self.__index = self
+                          setmetatable(instance_variables, class_delegation)
                           return instance
                        end
    setmetatable(klass, klass._super)
+   klass.__index = klass
    return klass
-end
-----------------------------------------------------------------------------------
-function validate_classname(argv)
-   local class_name = argv[1]
-   if(class_name and (type(class_name) == "string")) then
-      reserved = {"Class", "Object", "Instance", "Boolean", "String", "Number"}
-      for i,v in ipairs(reserved) do
-         if v == class_name then
-            error("This class can't be overridden")
-         end
-      end
-      return class_name
-   end
-   error("Undefined class name. Usage: Class{'ClassName'}")
 end
 ----------------------------------------------------------------------------------
 function validate_superclass_or_default_to_object(argv)
@@ -75,25 +67,21 @@ function validate_superclass_or_default_to_object(argv)
    return class_name and class_exists(class_name) or Object
 end
 ----------------------------------------------------------------------------------
-function publish(klass)
-   _G[klass._classname] = klass
-end
-----------------------------------------------------------------------------------
-function validate_attributes(klass,argv)
+function unpack_class_attributes(klass,argv)
    argv[1] = nil -- name is the 1st parameter
    argv[2] = nil -- superclass is the 2nd parameter
    -- other parameters are tables which define some classes
+   local result = {}
    for name, type in pairs(argv) do
-      _G_limbo_add_state = true
-      if(type == _G_limbo_element and _G_limbo[klass.classname]) then
-         type = klass
-         _G_limbo[klass.classname] = nil
-      end
-      _G_limbo_add_state = false
+      if(type == _G_limbo_element and _G_limbo[klass._classname]) then
+               type = klass
+               _G_limbo[klass._classname] = nil
+            end
       validate_type_exists(type)
       check_if_name_is_type_conform_with_superclass(klass._super,name,type)
-      klass._class_attributes[name] = type
+      result[name] = type
    end
+   return result
 end
 ----------------------------------------------------------------------------------
 function validate_type_exists(type)
@@ -143,4 +131,22 @@ end
 ----------------------------------------------------------------------------------
 function type_mismatch(klass1, klass2)
    error("Type mismatch: "..klass1.." is incompatible to "..klass2..".")
+end
+----------------------------------------------------------------------------------
+function publish(klass)
+   _G[klass._classname] = klass
+end
+----------------------------------------------------------------------------------
+function validate_classname(argv)
+   local class_name = argv[1]
+   if(class_name and (type(class_name) == "string")) then
+      reserved = {"Class", "Object", "Boolean", "String", "Number"}
+      for i,v in ipairs(reserved) do
+         if v == class_name then
+            error("This class can't be overridden")
+         end
+      end
+      return class_name
+   end
+   error("Undefined class name. Usage: Class{'ClassName'}")
 end

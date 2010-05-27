@@ -88,7 +88,7 @@ it("should initialize basic intance variables",
       Foo = nil
       Class{'Foo', id = Number, flag == Boolean, msg = String}
       f = Foo:new()
-      return f.id == 0 and flag == false and msg == ""
+      return f.id == 0 and f.flag == false and f.msg == ""
    end)
 ----------------------------------------------------------------------------------
 it("should respond to classname",

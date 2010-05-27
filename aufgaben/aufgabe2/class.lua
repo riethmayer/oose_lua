@@ -51,10 +51,10 @@ function Class(argv)
                           setmetatable(instance, instance_delegation)
                           local class_delegation = {
                              __index = function(self, key)
-                                          return klass.super[key]
+                                          return klass._super[key]
                                        end }
                           self.__index = self
-                          setmetatable(instance_variables, class_delegation)
+                          setmetatable(instance_delegation, class_delegation)
                           return instance
                        end
    setmetatable(klass, klass._super)

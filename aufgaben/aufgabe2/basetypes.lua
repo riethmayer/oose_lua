@@ -1,29 +1,35 @@
 require 'object'
-
+----------------------------------------------------------------------------------
 Boolean = {}
 Boolean._super = Object
-Boolean._class_methods = {}
-Boolean.classname = "Boolean"
+
+function Boolean:classname()
+   return "Boolean"
+end
 
 function Boolean:new()
    return false
 end
-
+----------------------------------------------------------------------------------
 Number = {}
 Number._super = Object
-Number._class_methods = {}
-Number.classname = "Number"
+
+function Number:classname()
+   return "Number"
+end
 
 function Number:new()
    return 0
 end
-
+----------------------------------------------------------------------------------
 String = {}
 String._super = Object
-String._class_methods = {}
-String.classname = "String"
+
+function String:classname()
+   return "String"
+end
 
 function String:new()
    return ""
 end
-
+----------------------------------------------------------------------------------

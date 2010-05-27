@@ -9,10 +9,15 @@ it("should have Object as superclass",
          String._super == Object
    end)
 ----------------------------------------------------------------------------------
+it("should should delegate its classname through object",
+   function()
+      return Boolean:classname() == "Boolean"
+   end)
+----------------------------------------------------------------------------------
 it("should have classnames",
    function()
-      return Boolean.classname == "Boolean" and Number.classname == "Number" and
-         String.classname == "String"
+      return Boolean:classname() == "Boolean" and Number:classname() == "Number" and
+   String:classname() == "String"
    end)
 ----------------------------------------------------------------------------------
 it("should be instantiatable",

@@ -19,23 +19,18 @@ function Instance.new(klass,params)
       _instance_variables = {}
    }
    -- instance doesn't know how to respond? Then it asks it class.
-   local instance_method_lookup = {
+   local instance_lookup = {
       __index = function(self,key)
                    return self._instance_variables[key]
+                    or self._class[key]
                 end,
       __newindex = function(self,key, value)
                       validate_type_safe(self,key,value)
                       self._instance_variables[key] = value
                    end
    }                     
-   local class_method_lookup = {
-      __index = function(self,key)
-                   return self._class[key]
-                end
-   }
    -- delegation
-   setmetatable(object, instance_method_lookup)
-   setmetatable(object._instance_variables, class_method_lookup)
+   setmetatable(object, instance_lookup)
    initialize(object,klass,params)
    return object
 end

@@ -43,7 +43,6 @@ function Class(argv)
                           return Instance.new(self, unpack(arg))
                        end
    delegate_to_class_methods(klass)
-   delegate_to_superclass_methods(klass)
    return klass
 end
 ----------------------------------------------------------------------------------
@@ -72,18 +71,12 @@ function delegate_to_class_methods(klass)
    local meta = {}
    meta.__index    = function(self,key)
                         return self._class_methods[key]
+                          or self._super[key]
                      end
    meta.__newindex = function(self,index,key)
                         self._class_methods[index] = key
                      end
    setmetatable(klass, meta)
-end
-----------------------------------------------------------------------------------
-function delegate_to_superclass_methods(klass)
-   local delegation_to_superclass = {
-      __index = klass._super
-   }
-   setmetatable(klass._class_methods, delegation_to_superclass)
 end
 ----------------------------------------------------------------------------------
 function publish(klass)

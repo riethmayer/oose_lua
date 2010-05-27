@@ -13,19 +13,15 @@ Object._class_methods = {
                   return self._classname
                end
 }
-setmetatable(Object, {
-                __index = function(self, key)
+setmetatable(Object, { __index = function(self, key)
                              return Object._class_methods[key]
-                          end
-             })
+                          end })
 -- function Object:classname()
 --    return self._class and self._class._classname
 -- end
 ----------------------------------------------------------------------------------
 function Object:new()
    local object = {_class = self}
-   setmetatable(object, self)
-   self.__index = self
    return object
 end
 ----------------------------------------------------------------------------------

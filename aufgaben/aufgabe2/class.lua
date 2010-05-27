@@ -38,7 +38,7 @@ function Class(argv)
    publish(klass)
    klass._class_attributes = unpack_class_attributes(klass, argv)
    klass.new         = function(self, params)
-                          local instance = klass._super.new(self)
+                          local instance = klass._super.new(self) -- assigns _class
                           local instance_variables = {}
                           for name, type in pairs(klass._class_attributes) do
                              instance_variables[name] = type:new()
@@ -50,15 +50,11 @@ function Class(argv)
                           }
                           setmetatable(instance, instance_delegation)
                           local class_delegation = {
-                             __index = function(self, key)
-                                          return klass._super[key]
-                                       end }
-                          self.__index = self
+                             __index = self }
                           setmetatable(instance_delegation, class_delegation)
                           return instance
                        end
-   setmetatable(klass, klass._super)
-   klass.__index = klass
+   setmetatable(klass,{__index = function(self,key) return self._super[key] end})
    return klass
 end
 ----------------------------------------------------------------------------------
@@ -74,9 +70,9 @@ function unpack_class_attributes(klass,argv)
    local result = {}
    for name, type in pairs(argv) do
       if(type == _G_limbo_element and _G_limbo[klass._classname]) then
-               type = klass
-               _G_limbo[klass._classname] = nil
-            end
+         type = klass
+         _G_limbo[klass._classname] = nil
+      end
       validate_type_exists(type)
       check_if_name_is_type_conform_with_superclass(klass._super,name,type)
       result[name] = type

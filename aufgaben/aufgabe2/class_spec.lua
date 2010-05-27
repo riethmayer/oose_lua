@@ -129,7 +129,7 @@ it("should delegate methods to superclass",
    function()
       Class{'Fahrzeug', marke = String, baujahr = Number}
       assert(Fahrzeug)
-      function Fahrzeug:is_japanese(jahr)
+      function Fahrzeug:is_japanese()
          return self.marke == 'Kawasaki'
       end
       Class{"Motorrad", Fahrzeug, ersatzFahrzeug = Motorrad}

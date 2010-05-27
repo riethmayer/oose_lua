@@ -25,60 +25,55 @@ it("should add 'MyClass' to the global context",
       Class{'MyClass', attribute1 = String, attribute2 = MyClass }
       return _G['MyClass'] ~= nil
    end)
-   
+
 -------------------------------------------------------------------------------
 it("instances should carry the name of the class",
-    function()
-        Class{'MyClass', attribute1 = String, attribute2 = MyClass }
-        local Object = MyClass:new()
-        return (Object._classname == "MyClass")
+   function()
+      Class{'MyClass', attribute1 = String, attribute2 = MyClass }
+      local o = MyClass:new()
+      return (o.classname == "MyClass")
    end)
-   
+
 -------------------------------------------------------------------------------
 it("should be optional to pass a superclass",
    function()
       Class{'WithoutSuperclass'}
-      return WithoutSuperclass._super == NullClass
+      return WithoutSuperclass._super == Object
    end)
 
 -------------------------------------------------------------------------------
 it("should be ok to have one attribute",
    function()
       Class{'WithOneAttribute', attribute1 = String}
-      Object = WithOneAttribute:new()
-      return Object.attribute1 == ""
+      local o = WithOneAttribute:new()
+      return o.attribute1 == ""
    end)
-   
+
 -------------------------------------------------------------------------------
 it("should be ok to have two attributes",
-  function()
-    Class{'WithTwoAttributes',
-      attribute1 = Boolean,
-      attribute2 = Number}
-    Object = WithTwoAttributes:new()
-    
-  return Object.attribute1 == true
-    and Object.attribute2 == 0
-  end)
+   function()
+      Class{'WithTwoAttributes',
+            attribute1 = Boolean,
+            attribute2 = Number}
+      local o = WithTwoAttributes:new()
+      return o.attribute1 == false and Object.attribute2 == 0
+   end)
 
 -------------------------------------------------------------------------------
 it("should raise an error on wrong type assignement",
-  function()
-    Class{'WithTwoAttributes',
-      a1 = Boolean,
-      a2 = Number}
-    Object = WithTwoAttributes:new()
-    
-    local function WrongAssign(obj)
-      obj.a1 = "Fails"
-    end
-    code, err = pcall(WrongAssign, Object)
-    
-  return 
-    Object.a2 == 0
-    and code == false
-    and TypeName(err) == TypeName(String)
-  end)
+   function()
+      Class{'WithTwoAttributes',
+            a1 = Boolean,
+            a2 = Number}
+      local o = WithTwoAttributes:new()
+
+      local function WrongAssign(obj)
+         obj.a1 = "Fails"
+      end
+      code, err = pcall(WrongAssign, o)
+
+      return o.a2 == 0 and code == false and TypeName(err) == TypeName(String)
+   end)
 
 -------------------------------------------------------------------------------
 it("should add MagicClass to global context before attribute assignment",
@@ -110,21 +105,21 @@ it("should not be possible to override an attribute with different type",
 
 -------------------------------------------------------------------------------
 -- I don't think this makes any sense at all
--- why redeclaring a element of the same type, 
+-- why redeclaring a element of the same type,
 -- this is clearly not intended, useless besides.
 
 it("should be possible to override an attribute with same type",
    function()
       Class{'Existing'}
       Class{'SuperExisting', nil, with_existing = Existing}
-      local code = pcall(Class, 
+      local code = pcall(Class,
                          {'DuperExisting', SuperExisting, with_existing = Existing})
       return code
    end)
 
 -------------------------------------------------------------------------------
 -- I don't think this makes any sense at all
--- why redeclaring a element of the same type, 
+-- why redeclaring a element of the same type,
 -- this is clearly not intended, useless besides.
 
 it("should be possible to override an attribute with same type and add more",
@@ -178,7 +173,7 @@ it("should accept convertible assignements",
       AObj.ARef = BObj
       return AObj.ARef == BObj
    end)
-   
+
 -------------------------------------------------------------------------------
 it("should raise an error if a super class is not a LOS class",
    function()

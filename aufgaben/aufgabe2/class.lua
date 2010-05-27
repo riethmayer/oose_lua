@@ -25,27 +25,7 @@ require 'instance'
 ----------------------------------------------------------------------------------
 _G_limbo_element = "unknown"
 _G_limbo = {}
-Boolean = {
-   _super = Object,
-   _classname = "Boolean",
-   new = function(self)
-            return false
-         end
-}
-String = {
-   _super = Object,
-   _classname = "String",
-   new = function(self)
-            return ""
-         end
-}
-Number = {
-   _super = Object,
-   _classname = "Number",
-   new = function(self)
-            return 0
-         end
-}
+
 setmetatable(_G, { __index = function(self,key)
                                 _G_limbo[key] = _G_limbo_element
                                 return _G_limbo_element
@@ -62,9 +42,6 @@ function Class(argv)
    klass.new         = function(self, ...)
                           return Instance.new(self, unpack(arg))
                        end
-   klass.validate_attributes = function(self,argv)
-                                  validate_attributes(self,argv)
-                               end
    delegate_to_class_methods(klass)
    delegate_to_superclass_methods(klass)
    return klass

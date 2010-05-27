@@ -154,19 +154,19 @@ it("should raise an error if a super class is not a LOS class",
 it("should define the basic string class",
    function()
       local s = String:new()
-      return s.classname == "String"
+      return s == ""
    end)
 ----------------------------------------------------------------------------------
 it("should define the basic boolean class",
    function()
       local b = Boolean:new()
-      return b.classname == "Boolean"
+      return b == false
    end)
 ----------------------------------------------------------------------------------
 it("should define the basic number class",
    function()
       local n = Number:new()
-      return n.classname == "Number"
+      return n == 0
    end)
 ----------------------------------------------------------------------------------
 it("should initialize number with 0",

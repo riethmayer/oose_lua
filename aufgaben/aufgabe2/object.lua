@@ -4,12 +4,12 @@
 -- Example usage:
 --   o = Object:new()  ;; this is a class method
 --   o:classname()     ;; this is an instance method
+
 Object = {
+   classname  = "Object",
    _super = nil,
-   _class_methods = {
-      classname  = "Object"
-   },
-   _class_attributes = {}
+   _class_attributes = {},
+   _class_methods = {}
 }
 -- delegate to its class class methods
 local class_method_lookup = {
@@ -36,6 +36,6 @@ function Object:new()
    local class_method_lookup = {
       __index   = object._class._class_methods }
    setmetatable(object._instance_methods,class_method_lookup)
-
    return object
 end
+----------------------------------------------------------------------------------

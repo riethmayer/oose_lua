@@ -1,5 +1,4 @@
 require 'basetypes'
-
 --  Usage: Class{'<classname>' [, <superclass>] [, <variable> = <type>]+ }
 --    * classname (mandatory):
 --      - must not be Object
@@ -25,34 +24,32 @@ require 'basetypes'
 ----------------------------------------------------------------------------------
 -- adding not yet known classes to limbo
 _G_limbo_element = "unknown"
+_G_limbo_add_state = false
 _G_limbo = {}
 setmetatable(_G, { __index = function(self,key)
                                 _G_limbo[key] = _G_limbo_element
-                                return "unknown"
+                                if _G_limbo_add_state then
+                                   return _G_limbo_element
+                                else
+                                   return nil
+                                end
                              end } )
 ----------------------------------------------------------------------------------
 function Class(argv)
    local klass = {}
-   klass.classname   = validate_classname(argv)
+   klass._classname  = validate_classname(argv)
    klass._super      = validate_superclass_or_default_to_object(argv)
-   klass._class_methods    = {}
    klass._class_attributes = {}
    publish(klass) -- should be available to add limbo magic
    validate_attributes(klass, argv)
    klass.new         = function(self, params)
-                          local instance = {}
-                          instance._class = self
+                          local instance = klass._super.new(self)
                           instance._instance_variables = {}
-                          local mt = {
-                             __index = function(name,key)
-                                          return self[key]
-                                       end
-                          }
-                          setmetatable(instance, mt)
-                          self.__index = self
-                          instance.classname= function(o)
-                             return o._class.classname
+                          for name, type in pairs(klass._class_attributes) do
+                             instance._instance_variables[name] = type:new()
                           end
+                          setmetatable(instance, instance._instance_variables)
+                          setmetatable(instance._instance_variables, instance._class)
                           return instance
                        end
    setmetatable(klass, klass._super)
@@ -78,28 +75,8 @@ function validate_superclass_or_default_to_object(argv)
    return class_name and class_exists(class_name) or Object
 end
 ----------------------------------------------------------------------------------
--- function Classname:foo() ... end => Classname.methods == { foo = function ... end }
--- requires delegation for newindex, index and call?
-function delegate_to_class_methods(klass)
-   local meta = {}
-   meta.__index    = function(self,key)
-                        return self._instance_methods and self._instance_methods[key] or self._class_methods[key]
-                     end
-   meta.__newindex = function(self,index,key)
-                        self._class_methods[index] = key
-                     end
-   setmetatable(klass, meta)
-end
-----------------------------------------------------------------------------------
-function delegate_to_superclass_methods(klass)
-   local delegation_to_superclass = {
-      __index = klass._super
-   }
-   setmetatable(klass._class_methods, delegation_to_superclass)
-end
-----------------------------------------------------------------------------------
 function publish(klass)
-   _G[klass.classname] = klass
+   _G[klass._classname] = klass
 end
 ----------------------------------------------------------------------------------
 function validate_attributes(klass,argv)
@@ -107,10 +84,12 @@ function validate_attributes(klass,argv)
    argv[2] = nil -- superclass is the 2nd parameter
    -- other parameters are tables which define some classes
    for name, type in pairs(argv) do
+      _G_limbo_add_state = true
       if(type == _G_limbo_element and _G_limbo[klass.classname]) then
          type = klass
          _G_limbo[klass.classname] = nil
       end
+      _G_limbo_add_state = false
       validate_type_exists(type)
       check_if_name_is_type_conform_with_superclass(klass._super,name,type)
       klass._class_attributes[name] = type
@@ -119,10 +98,10 @@ end
 ----------------------------------------------------------------------------------
 function validate_type_exists(type)
    if(not class_exists(type)) then
-      result = "Undefined: "
+      result = "Undefined:"
       _G_limbo["class_name"] = nil
       for undefined in pairs(_G_limbo) do
-         result = result .. undefined .. " "
+         result = result.." ".. undefined
       end
       error(result)
    end
@@ -135,7 +114,7 @@ function class_exists(klassname)
 end
 ----------------------------------------------------------------------------------
 function check_if_name_is_type_conform_with_superclass(klass,name,type)
-   if(klass == nil) then
+   if(klass == nil or klass._class_attributes == nil) then
       return true
    end
    for super_name, super_type in pairs(klass._class_attributes) do
@@ -153,9 +132,9 @@ end
 ----------------------------------------------------------------------------------
 -- Class{'Classname', foo = <Class> } => Classname._attributes = {foo = <Class>}
 -- Checks existence of <Class> and whether foo has been defined in Object already.
--- If foo has been defined in Object already, <Class> must be equal to or 
+-- If foo has been defined in Object already, <Class> must be equal to or
 -- deriving from foo._class._super._attributes[foo].
--- Class{'Classname', Superclass, foo = <Class>} must check compatibility for 
+-- Class{'Classname', Superclass, foo = <Class>} must check compatibility for
 -- Superclass and its superclass's attributes.
 ----------------------------------------------------------------------------------
 function is_superclass(type, klass)

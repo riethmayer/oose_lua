@@ -43,7 +43,7 @@ it("should not be possible to create a class called Number",
 it("should add 'MyClass' to the global context",
    function()
       local klass = Class{'MyClass', attribute1 = String, attribute2 = MyClass }
-      assert(klass.classname == "MyClass")
+      assert(klass._classname == "MyClass")
       return _G['MyClass'] ~= nil
    end)
 ----------------------------------------------------------------------------------

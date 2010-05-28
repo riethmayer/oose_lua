@@ -43,24 +43,37 @@ function Class(argv)
                           for name, type in pairs(klass._class_attributes) do
                              instance_variables[name] = type:new()
                           end
+                          -- first delegate to instance variables
                           local instance_delegation = {
                              __index = function(self, key)
                                           return instance_variables[key]
                                        end
                           }
                           setmetatable(instance, instance_delegation)
+
+                          -- second delegate to class methods
                           local class_delegation = {
-                             __index = klass }
+                             __index = function(self,key)
+                                          return instance._class[key]
+                                       end
+                          }
                           setmetatable(instance_variables, class_delegation)
                           return instance
                        end
+   -- third delegate to superclass
    setmetatable(klass,{__index = function(self,key) return self._super[key] end})
    return klass
 end
 ----------------------------------------------------------------------------------
 function validate_superclass_or_default_to_object(argv)
    local class_name = argv[2]
-   return class_name and class_exists(class_name) or Object
+   local result = {}
+   if(class_name and class_exists(class_name)) then
+      result = class_name
+   else
+      result = Object
+   end
+   return result
 end
 ----------------------------------------------------------------------------------
 function unpack_class_attributes(klass,argv)

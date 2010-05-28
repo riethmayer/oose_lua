@@ -127,16 +127,28 @@ it("should be possible to override an attribute with same type and add more",
 ----------------------------------------------------------------------------------
 it("should delegate methods to superclass",
    function()
-      Class{'Fahrzeug', marke = String, baujahr = Number}
-      assert(Fahrzeug)
+      Class{'Fahrzeug', marke = String}
       function Fahrzeug:is_japanese()
          return self.marke == 'Kawasaki'
       end
-      Class{"Motorrad", Fahrzeug, ersatzFahrzeug = Motorrad}
+      Class{"Motorrad", Fahrzeug}
       local ka = Motorrad:new()
       ka.marke = 'Kawasaki'
-      ka.baujahr = 1999
       return ka:is_japanese() == true
+   end)
+----------------------------------------------------------------------------------
+it("should share instance attributes from super classes",
+   function()
+      Foo = nil
+      Class{'Foo', id = Number}
+      function Foo:myId()
+         return self.id
+      end
+      f = Foo:new()
+      assert(f:myId() == 0)
+      Class{'Bar', Foo}
+      b = Bar:new()      
+      return b:myId() == 0
    end)
 ----------------------------------------------------------------------------------
 it("should raise an error if an unsupported attribute type is used",

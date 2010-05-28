@@ -52,10 +52,10 @@ function Class(argv)
                           local super_variables = klass._super:new()
                           super_variables= super_variables._instance_variables or {}
                           for name, type in pairs(klass._class_attributes) do
-                             if(type == klass) then
-                                instance_variables[name] = nil
-                             else
+                             if(basetype(type)) then
                                 instance_variables[name] = type:new()
+                             else
+                                instance_variables[name] = nil
                              end
                           end
                           -- first delegate to instance variables
@@ -223,4 +223,9 @@ function validate_classname(argv)
       return class_name
    end
    error("Undefined class name. Usage: Class{'ClassName'}")
+end
+----------------------------------------------------------------------------------
+function basetype(type)
+   t = type:classname()
+   return t == "Boolean" or t == "Number" or t == "String"
 end

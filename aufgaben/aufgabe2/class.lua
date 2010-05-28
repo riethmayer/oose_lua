@@ -82,9 +82,9 @@ function unpack_class_attributes(klass,argv)
    -- other parameters are tables which define some classes
    local result = {}
    for name, type in pairs(argv) do
-      type = replace_limbo_type(type, klass)
+      type = replace_limbo_type(type, klass) -- Class{'Foo', f = Foo} => Foo = limbo
       validate_type_exists(type)
-      check_if_name_is_type_conform_with_superclass(klass._super,name,type)
+      check_if_name_is_type_conform_with_superclass(klass,name,type)
       result[name] = type
    end
    return result
@@ -116,19 +116,40 @@ function class_exists(klassname)
 end
 ----------------------------------------------------------------------------------
 function check_if_name_is_type_conform_with_superclass(klass,name,type)
-   if(klass == nil or klass._class_attributes == nil) then
-      return true
+   -- What is conform?
+   -- 1. name and type can't be nil, don't have to check for that
+   -- 2. Class{'Foo', id = Number}
+   --    Foo._super is Object
+   --    Object.id doesn't exist (we assume this will never happen)
+   --    So it's conform
+   if(klass._super == Object) then 
+      return true 
    end
-   for super_name, super_type in pairs(klass._class_attributes) do
-      if(super_name == name) then
-         if(klass == super_type) then
-            return true
-         end
-         if(not is_superclass(type, super_type)) then
-            type_mismatch(type, super_type)
-         end
-      end
-   end
+   -- 3. Class{'Bar', Foo, id = Number}
+   --    Bar._super is Foo
+   --    Foo.id's type is Number
+   --    Bar.id's type is Number
+   --    So it's conform
+   for super_name, super_type in pairs(klass._super._class_attributes) do
+      if( name == super_name ) then -- id == id
+         if(type == super_type) then -- Number == Number
+            -- this attribute is fine, so continue checking the remaining ones
+         else
+            -- 1. Bar's id is more fancy than Foo's id
+            --    This means, Class{'Foo', id = Number}
+            --    Class{'FancyNumber',Number}
+            --    Class{'Bar',Foo, id = FancyNumber} should be fine
+            --    type == FancyNumber, super_type == Number
+            if(type:inherits_from(super_type)) then
+               -- yes type is more special then supertype, nothing happens
+            else                           
+               -- 2. the name is the same, but there is no inheritance
+               --    So this must clash!
+               type_mismatch(type, super_type)
+            end  -- inheritance check
+         end -- type and super_type comparison
+      end -- class attribute name comparison
+   end -- loop for all class attributes
    return true
 end
 ----------------------------------------------------------------------------------

@@ -41,7 +41,11 @@ function Class(argv)
                           local instance = klass._super.new(self) -- assigns _class
                           local instance_variables = {}
                           for name, type in pairs(klass._class_attributes) do
-                             instance_variables[name] = type:new()
+                             if(type == klass) then
+                                instance_variables[name] = nil
+                             else
+                                instance_variables[name] = type:new()
+                             end
                           end
                           -- first delegate to instance variables
                           local instance_delegation = {

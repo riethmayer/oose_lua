@@ -19,10 +19,8 @@ setmetatable(Object, { __index = function(self, key)
 ----------------------------------------------------------------------------------
 function Object:new()
    local object = {_class = self}
-   setmetatable(object, {
-                   __index = function(self,key)
-                                return self._class[key]
-                             end                })
+   setmetatable(object,
+                { __index = function(self,key)  return self._class[key] end })
    return object
 end
 ----------------------------------------------------------------------------------

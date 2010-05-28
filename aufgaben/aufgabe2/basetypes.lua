@@ -1,8 +1,7 @@
 --================================================================================
 Attribute = {}
 function Attribute:can_accept(value)
-   return type(value) == "table" and value._classname == self._attribute_class
-     or self._default_value() and type(value) == type(self._default_value())
+   return self._default_value() and type(value) == type(self._default_value())
 end
 function Attribute:new(declaration)
    assert(type(declaration) == "table")
@@ -67,7 +66,11 @@ ClassRef._super = Attribute
 ClassRef._classname = "ClassRef"
 Attribute:register_attribute(ClassRef)
 function ClassRef:can_accept(value)
-   return value:has_ancestor(self._ref)
+   if value and value._class then
+      return value._class:has_ancestor(self._ref)
+   else
+      return false
+   end
 end
 function ClassRef:new(class)
    local class_ref = {}

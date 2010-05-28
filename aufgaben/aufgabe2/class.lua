@@ -90,10 +90,9 @@ function class_impl(argv)
    recording_global_forward_decls = false
 
    local klass = {}
-   klass.classname = validated_classname(front(argv))
+   klass._classname = validated_classname(front(argv))
    klass._super = validated_superclass(front(argv), klass) or Object
    klass._class_attributes = validated_attributes(argv,klass)
-   assert(table.getn(argv) == 0)
 
    klass._class_methods = {}
    delegate_to_class_methods(klass)
@@ -121,8 +120,9 @@ function validated_classname(class_name)
 end
 ----------------------------------------------------------------------------------
 function validated_superclass(super_class, klass)
-   if super_class and (type(super_class) ~= "table" or not super_class.classname
-		       or super_class:has_ancestor(klass)) then
+   if super_class and (type(super_class) ~= "table" 
+		    or not super_class._classname
+		    or super_class:has_ancestor(klass)) then
       wrong_super_class_error(super_class)
    end
    return super_class
@@ -152,6 +152,8 @@ function add_other_decls(attr, argv, klass)
       check_can_be_assigned(klass[name], decl_type)
       attr[name] = decl_type:new()
    end
+   assert(#argv == #attr)
+   argv = nil
    return attr
 end
 ----------------------------------------------------------------------------------
@@ -161,20 +163,12 @@ function check_can_be_assigned(existing, declared)
    end
 end
 ----------------------------------------------------------------------------------
--- function Classname:foo() ... end => Classname.methods == { foo = function ... end }
--- requires delegation for newindex, index and call?
 function delegate_to_class_methods(klass)
    local meta = {}
-   meta.__index = function(self,key)
-		     return self._class_methods[key]
-			or self._super[key]
-		  end
-   meta.__newindex = function(self,index,key)
-                        self._class_methods[index] = key
-                     end
+   meta.__index = self._super
+   meta.__newindex = self._super
    setmetatable(klass, meta)
 end
-
 ----------------------------------------------------------------------------------
 function publish(klass)
    _G[klass.classname] = klass

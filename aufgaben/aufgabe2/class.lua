@@ -82,15 +82,20 @@ function unpack_class_attributes(klass,argv)
    -- other parameters are tables which define some classes
    local result = {}
    for name, type in pairs(argv) do
-      if(type == _G_limbo_element and _G_limbo[klass._classname]) then
-         type = klass
-         _G_limbo[klass._classname] = nil
-      end
+      type = replace_limbo_type(type, klass)
       validate_type_exists(type)
       check_if_name_is_type_conform_with_superclass(klass._super,name,type)
       result[name] = type
    end
    return result
+end
+----------------------------------------------------------------------------------
+function replace_limbo_type(type, klass)
+   if(type == _G_limbo_element and _G_limbo[klass._classname]) then
+      type = klass
+      _G_limbo[klass._classname] = nil
+   end
+   return type
 end
 ----------------------------------------------------------------------------------
 function validate_type_exists(type)

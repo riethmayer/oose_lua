@@ -6,7 +6,7 @@ Boolean._class_methods = {}
 Boolean.classname = "Boolean"
 
 function Boolean:new()
-   return false
+   return BaseNew(Boolean)
 end
 
 Number = {}
@@ -15,7 +15,7 @@ Number._class_methods = {}
 Number.classname = "Number"
 
 function Number:new()
-   return 0
+   return BaseNew(Number)
 end
 
 String = {}
@@ -24,6 +24,6 @@ String._class_methods = {}
 String.classname = "String"
 
 function String:new()
-   return ""
+   return BaseNew(String)
 end
 

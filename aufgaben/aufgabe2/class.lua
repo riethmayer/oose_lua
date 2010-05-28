@@ -23,97 +23,163 @@ require 'instance'
 --        Class{'Baz', Bar, foo = Bar } must return an error, as Foo and Bar have
 --        nothing in common.
 ----------------------------------------------------------------------------------
-_G_limbo_element = "unknown"
-_G_limbo = {}
+function call_chain(...)
+   local functions = arg
+   return
+   function(...)
+      for _, func in ipairs(arg) do
+	 func(...)
+      end
+   end
+end
+----------------------------------------------------------------------------------
+function class_hook(global_table, key)
+   assert(_G == global_table)
+   if key == "Class" then
+      recording_global_forward_decls = true
+      return class_impl
+   end
+   if recording_global_forward_decls then
+      return key
+   end
+end
+----------------------------------------------------------------------------------
+recording_global_forward_decls = false
+----------------------------------------------------------------------------------
+function set_global_indexhook()
+   old_meta = getmetatable(_G)
+   new_meta = old_meta or {}
+   local prev_index_func = new_meta.__index
+   if prev_index_func then
+      new_meta.__index = call_chain(class_hook, prev_index_func)
+   else
+      new_meta.__index = class_hook
+   end
+   setmetatable(_G, new_meta)
+end
+----------------------------------------------------------------------------------
+set_global_indexhook()
 
-setmetatable(_G, { __index = function(self,key)
-                                _G_limbo[key] = _G_limbo_element
-                                return _G_limbo_element
-                             end } )
+--================================================================================
+function wrong_type_decl_error(name, decl_type)
+   local message = "Member "..(name or "unknown").." declared with incomaptible\
+     tpye: "..type(decl_type)..", only classes allowed."
+   error(message)
+end
+--================================================================================
+function wrong_type_assign_error(ex_type, decl_type)
+   local message = "Member "..(name or "unknown").." declared with incomaptible\
+     tpye: "..type(decl_type)..". Exisiting of type "..ex_type.classname.."."
+   error(message)
+end
+--================================================================================
+function wrong_super_class_error(super_class)
+   local message = "Wrong super class of type "..type(super_class).." / "
+     ..(super_class and super_class.classname or "").."."
+   error(message)
+end
 
-function Class(argv)
+--================================================================================
+function front(t)
+   return table.remove(t, 1)
+end
+
+
+--================================================================================
+function class_impl(argv)
+   recording_global_forward_decls = false
+
    local klass = {}
-   klass.classname   = validate_classname(argv)
-   klass._super      = validate_superclass_or_default_to_object(argv)
-   klass._class_methods    = {}
-   klass._class_attributes = {}
-   publish(klass) -- should be available to add limbo magic
-   validate_attributes(klass, argv)
-   klass.new         = function(self, ...)
-                          return Instance.new(self, unpack(arg))
-                       end
+   klass.classname = validated_classname(front(argv))
+   klass._super = validated_superclass(front(argv), klass) or Object
+   klass._class_attributes = validated_attributes(argv,klass)
+   assert(table.getn(argv) == 0)
+
+   klass._class_methods = {}
    delegate_to_class_methods(klass)
+   function klass:new(...)
+      return Instance.new(self, unpack(arg))
+   end
+   publish(klass)
    return klass
 end
 ----------------------------------------------------------------------------------
-function validate_classname(argv)
-   local class_name = argv[1]
-   if(class_name and (type(class_name) == "string")) then
-      reserved = {"Class", "Object", "Instance", "Boolean", "String", "Number"}
-      for i,v in ipairs(reserved) do
-         if v == class_name then
-            error("This class can't be overridden")
-         end
-      end
-      return class_name
+function validated_classname(class_name)
+   if not class_name or type(class_name) ~= "string" then
+      error("Undefined class name. Usage: Class{'ClassName'}")
    end
-   error("Undefined class name. Usage: Class{'ClassName'}")
+
+   local reserved_names =
+      {"Class", "Object", "Instance", "Boolean", "String", "Number"}
+
+   for i,v in ipairs(reserved_names) do
+      if v == class_name then
+	 error(v.." can't be overridden")
+      end
+   end
+   return class_name
 end
 ----------------------------------------------------------------------------------
-function validate_superclass_or_default_to_object(argv)
-   local class_name = argv[2]
-   return class_name and class_exists(class_name) or Object
+function validated_superclass(super_class, klass)
+   if super_class and (type(super_class) ~= "table" or not super_class.classname
+		       or super_class:has_ancestor(klass)) then
+      wrong_super_class_error(super_class)
+   end
+   return super_class
+end
+----------------------------------------------------------------------------------
+function validated_attributes(argv,klass)
+   local attributes = get_forward_decls(argv, klass)
+   attributes = add_other_decls(attributes, argv, klass)
+   return attributes
+end
+----------------------------------------------------------------------------------
+function get_forward_decls(argv, klass)
+   local attr = {}
+   for name, decl_type in pairs(argv) do
+      if decl_type == klass.classname then
+	 argv[name] = nil
+	 attr[name] = klass
+      elseif type(decl_type) ~= "table" then
+	 wrong_type_decl_error(name, decl_type)
+      end
+   end
+   return attr
+end
+----------------------------------------------------------------------------------
+function add_other_decls(attr, argv, klass)
+   for name, decl_type in pairs(argv) do
+      check_can_be_assigned(klass[name], decl_type)
+      attr[name] = decl_type:new()
+   end
+   return attr
+end
+----------------------------------------------------------------------------------
+function check_can_be_assigned(existing, declared)
+   if exisiting and not declared:has_ancestor(existing) then
+      wrong_type_assign_error(existing, declared)
+   end
 end
 ----------------------------------------------------------------------------------
 -- function Classname:foo() ... end => Classname.methods == { foo = function ... end }
 -- requires delegation for newindex, index and call?
 function delegate_to_class_methods(klass)
    local meta = {}
-   meta.__index    = function(self,key)
-                        return self._class_methods[key]
-                          or self._super[key]
-                     end
+   meta.__index = function(self,key)
+		     return self._class_methods[key]
+			or self._super[key]
+		  end
    meta.__newindex = function(self,index,key)
                         self._class_methods[index] = key
                      end
    setmetatable(klass, meta)
 end
+
 ----------------------------------------------------------------------------------
 function publish(klass)
    _G[klass.classname] = klass
 end
-----------------------------------------------------------------------------------
-function validate_attributes(klass,argv)
-   argv[1] = nil -- name is the 1st parameter
-   argv[2] = nil -- superclass is the 2nd parameter
-   -- other parameters are tables which define some classes
-   for name, type in pairs(argv) do
-      if(type == _G_limbo_element and _G_limbo[klass.classname]) then
-         type = klass
-         _G_limbo[klass.classname] = nil
-      end
-      validate_type_exists(type)
-      check_if_name_is_type_conform_with_superclass(klass._super,name,type)
-      klass._class_attributes[name] = type
-   end
-end
-----------------------------------------------------------------------------------
-function validate_type_exists(type)
-   if(not class_exists(type)) then
-      result = "Undefined: "
-      _G_limbo["class_name"] = nil
-      for undefined in pairs(_G_limbo) do
-         result = result .. undefined .. " "
-      end
-      error(result)
-   end
-end
-----------------------------------------------------------------------------------
-function class_exists(klassname)
-   if type(klassname) == "table" then
-      return klassname
-   end
-end
+--[[
 ----------------------------------------------------------------------------------
 function check_if_name_is_type_conform_with_superclass(klass,name,type)
    if(klass == nil) then
@@ -131,7 +197,6 @@ function check_if_name_is_type_conform_with_superclass(klass,name,type)
    end
    return true
 end
-----------------------------------------------------------------------------------
 -- Class{'Classname', foo = <Class> } => Classname._attributes = {foo = <Class>}
 -- Checks existence of <Class> and whether foo has been defined in Object already.
 -- If foo has been defined in Object already, <Class> must be equal to or deriving from foo._class._super._attributes[foo].
@@ -144,3 +209,4 @@ end
 function type_mismatch(klass1, klass2)
    error("Type mismatch: "..klass1.." is incompatible to "..klass2..".")
 end
+]]--

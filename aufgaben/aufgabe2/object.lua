@@ -13,10 +13,12 @@ Object = {
 }
 -- delegate to its class class methods
 local class_method_lookup = {
-   __index   = Object._class_methods }
+   __index   = Object._class_methods,
+   __newindex = Object._class_methods}
 setmetatable(Object,class_method_lookup)
 -- self is a class name for a given Class, which is to be instantiated
 -- provide
+----------------------------------------------------------------------------------
 function Object:new()
    local object = {
       _class = self,
@@ -39,3 +41,10 @@ function Object:new()
    return object
 end
 ----------------------------------------------------------------------------------
+function Object:has_ancestor(other_class)
+   local iter = self
+   while iter and iter ~= other_class do
+      iter = iter._super
+   end
+   return iter ~= nil
+end

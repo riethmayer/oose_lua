@@ -6,16 +6,17 @@ require 'basetypes'
 Instance = {}
 -- klass is the 'Foo' in Foo:new()
 -- params for Foo:new(6) in case we'll allow parameterized instantiation
-function Instance.new(klass,params)
-   -- allow object instantiation
+----------------------------------------------------------------------------------
+function BaseNew(klass, params)
+
    if klass == Object then
       local o = Object:new()
       return o
    end
-   -- the object with it's class and superclass
-   local object = {
+
+   local new_instance = {
       _class = klass,
-      _super = validate_superclass(klass,params),
+      _super = validate_superclass(klass),
       _instance_variables = {}
    }
    -- instance doesn't know how to respond? Then it asks it class.
@@ -30,13 +31,18 @@ function Instance.new(klass,params)
                    end
    }                     
    -- delegation
-   setmetatable(object, instance_lookup)
-   initialize(object,klass,params)
-   return object
+   setmetatable(new_instance, instance_lookup)
+   return new_instance
+end
+----------------------------------------------------------------------------------
+function Instance.new(klass,params)
+   local new_instance = BaseNew(klass, params)
+   initialize(new_instance, klass, params)
+   return new_instance
 end
 ----------------------------------------------------------------------------------
 -- checks wether the superclass responds to class, otherwise it defaults to object
-function validate_superclass(klass,params)
+function validate_superclass(klass)
    if(klass and klass._super and klass._super._class) then
       return klass._super
    else   

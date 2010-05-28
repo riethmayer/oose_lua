@@ -1,4 +1,5 @@
-require "instance"
+require 'instance'
+require 'self_super_trap'
 
 --  Usage: Class{'<classname>' [, <superclass>] [, <variable> = <type>]+ }
 --    * classname (mandatory):
@@ -154,7 +155,7 @@ end
 ----------------------------------------------------------------------------------
 
 function validated_superclass(super_class, klass)
-   if super_class and (type(super_class) ~= "table" 
+   if super_class and (type(super_class) ~= "table"
 		    or not super_class._classname
 		    or super_class:has_ancestor(klass)) then
       wrong_super_class_error(super_class)

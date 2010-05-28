@@ -54,7 +54,10 @@ end
 function Function:new(func_def)
    local definition = func_def
    local func = {}
-   setmetatable(func, {__index = self, __call = definition})
+   setmetatable(func, {__index = self, __call = 
+		       function(t, ...)
+			  return definition(...)
+		       end})
    function func._default_value()
       return definition
    end

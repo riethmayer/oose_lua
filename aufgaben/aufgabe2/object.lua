@@ -1,4 +1,5 @@
 require 'basetypes'
+require 'self_super_trap'
 
 Object = {}
 Object._classname = "Object"
@@ -22,7 +23,8 @@ function Object:class_set(key, value)
    self._class_attributes[key] = Function:new(value)
 end
 ----------------------------------------------------------------------------------
-function Object:get(key)  
+function Object:get(key)
+   before_call(self)
    found_decl = self._class[key]
    if found_decl then
       return self._attribute_values[key]
@@ -42,6 +44,10 @@ function Object:set(key, value)
       error("No attribute "..key.." which can be assigned a "
 	    ..value_type..".")
    end
+end
+----------------------------------------------------------------------------------
+function before_call(inst)
+   set_current_super_self(inst)
 end
 ----------------------------------------------------------------------------------
 function Object:new()

@@ -26,8 +26,16 @@ require 'basetypes'
 _G_limbo_element = "unknown"
 _G_limbo = {}
 setmetatable(_G, { __index = function(self,key)
-                                _G_limbo[key] = _G_limbo_element
-                                return _G_limbo_element
+                                _G_limbo[key] = key
+                                if type(key) == "string" then
+                                   if(key == "_PROMPT") then
+                                      return nil
+                                   else
+                                      return key
+                                   end
+                                else
+                                   return nil
+                                end
                              end } )
 ----------------------------------------------------------------------------------
 function Class(argv)
@@ -35,6 +43,7 @@ function Class(argv)
    -- checks for reserved words like Class, Object and so on.
    klass._classname  = validate_classname(argv)
    klass._super      = validate_superclass_or_default_to_object(argv)
+   check_for_inheritance_cycles(klass)
    publish(klass)
    klass._class_attributes = unpack_class_attributes(klass, argv)
    klass.new         = function(self, params)
@@ -67,12 +76,13 @@ function Class(argv)
                              __index = function(self,key)
                                           return instance._class[key]
                                        end
-                          }                          
+                          }
                           setmetatable(instance_variables, class_delegation)
                           instance._instance_variables = instance_variables
                           return instance
                        end
    -- third delegate to superclass
+   _G_limbo[klass._classname] = nil
    setmetatable(klass,{__index = function(self,key) return self._super[key] end})
    return klass
 end
@@ -106,10 +116,23 @@ function unpack_class_attributes(klass,argv)
    return result
 end
 ----------------------------------------------------------------------------------
+function check_for_inheritance_cycles(klass)
+   -- Given Class{'A'}
+   -- Given Class{'B',A}
+   -- If you try to do Class{'A', B}
+   -- then B:inherits_from(A) is true before
+   if klass._super:inherits_from(_G[klass._classname]) then
+      error("Cyclic dependency detected: between "..klass.." and "..class_name)
+   end
+end
+----------------------------------------------------------------------------------
 function replace_limbo_type(type, klass)
-   if(type == _G_limbo_element and _G_limbo[klass._classname]) then
-      type = klass
-      _G_limbo[klass._classname] = nil
+   if(type == _G_limbo[klass._classname]) then -- it may be klass or rubbish
+      if _G[type] then
+         type = klass
+      else
+         error("Class definition not found for the given instance variable.")
+      end
    end
    return type
 end
@@ -138,8 +161,8 @@ function check_if_name_is_type_conform_with_superclass(klass,name,type)
    --    Foo._super is Object
    --    Object.id doesn't exist (we assume this will never happen)
    --    So it's conform
-   if(klass._super == Object) then 
-      return true 
+   if(klass._super == Object) then
+      return true
    end
    -- 3. Class{'Bar', Foo, id = Number}
    --    Bar._super is Foo
@@ -158,7 +181,7 @@ function check_if_name_is_type_conform_with_superclass(klass,name,type)
             --    type == FancyNumber, super_type == Number
             if(type:inherits_from(super_type)) then
                -- yes type is more special then supertype, nothing happens
-            else                           
+            else
                -- 2. the name is the same, but there is no inheritance
                --    So this must clash!
                type_mismatch(type, super_type)

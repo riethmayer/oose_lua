@@ -57,10 +57,10 @@ it("should be ok to have one attribute",
 ----------------------------------------------------------------------------------
 it("should be ok to have two attributes",
    function()
-       Class{'WithTwoAttributes', nil,
-                    attribute1 = Boolean,
-                    attribute2 = Boolean}
-       return WithTwoAttributes._class_attributes.attribute1 == Boolean and 
+      Class{'WithTwoAttributes', nil,
+            attribute1 = Boolean,
+            attribute2 = Boolean}
+      return WithTwoAttributes._class_attributes.attribute1 == Boolean and
          WithTwoAttributes._class_attributes.attribute2 == Boolean
    end)
 ----------------------------------------------------------------------------------
@@ -82,6 +82,14 @@ it("should add MagicClass to global context before attribute assignment",
       Class{'MagicClass', automagic = MagicClass }
       return MagicClass._class_attributes.automagic == MagicClass
    end)
+----------------------------------------------------------------------------------
+it("should add MagicClass even if its the last instance variable",
+   function()
+      MagicClass = nil
+      Class{'MagicClass', id = Number, automagic = MagicClass }
+      return MagicClass._class_attributes.automagic == MagicClass
+   end)
+
 ----------------------------------------------------------------------------------
 it("should initialize basic instance variables",
    function()
@@ -111,7 +119,7 @@ it("should be possible to override an attribute with same type",
    function()
       Class{'Existing'}
       Class{'SuperExisting', with_existing = Existing}
-      local code = pcall(Class, 
+      local code = pcall(Class,
                          {'DuperExisting', SuperExisting, with_existing = Existing})
       return code
    end)
@@ -147,12 +155,13 @@ it("should share instance attributes from super classes",
       f = Foo:new()
       assert(f:myId() == 0)
       Class{'Bar', Foo}
-      b = Bar:new()      
+      b = Bar:new()
       return b:myId() == 0
    end)
 ----------------------------------------------------------------------------------
 it("should raise an error if an unsupported attribute type is used",
    function()
+      unbekannterTyp = nil
       local code = pcall(Class,{"FehlerKlasse", falschesAttribut = unbekannterTyp})
       return code == false
    end)

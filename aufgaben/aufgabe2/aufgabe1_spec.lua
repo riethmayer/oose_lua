@@ -27,11 +27,11 @@ it("should add 'MyClass' to the global context",
    end)
 
 -------------------------------------------------------------------------------
-it("instances should carry the name of the class",
+it("instances should be of class",
    function()
       Class{'MyClass', attribute1 = String, attribute2 = MyClass }
       local o = MyClass:new()
-      return (o.classname == "MyClass")
+      return (o._class == MyClass)
    end)
 
 -------------------------------------------------------------------------------
@@ -48,7 +48,6 @@ it("should be ok to have one attribute",
       local o = WithOneAttribute:new()
       return o.attribute1 == ""
    end)
-
 -------------------------------------------------------------------------------
 it("should be ok to have two attributes",
    function()
@@ -56,7 +55,7 @@ it("should be ok to have two attributes",
             attribute1 = Boolean,
             attribute2 = Number}
       local o = WithTwoAttributes:new()
-      return o.attribute1 == false and Object.attribute2 == 0
+      return o.attribute1 == false and o.attribute2 == 0
    end)
 
 -------------------------------------------------------------------------------

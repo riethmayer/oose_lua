@@ -23,6 +23,7 @@ require "instance"
 --        Class{'Baz', Bar, foo = Bar } must return an error, as Foo and Bar have
 --        nothing in common.
 ----------------------------------------------------------------------------------
+
 function call_chain(...)
    local functions = arg
    return
@@ -32,7 +33,9 @@ function call_chain(...)
       end
    end
 end
+
 ----------------------------------------------------------------------------------
+
 function class_hook(global_table, key)
    assert(_G == global_table)
    if key == "Class" then
@@ -43,9 +46,26 @@ function class_hook(global_table, key)
       return key
    end
 end
+
 ----------------------------------------------------------------------------------
+
+function verify_restricted_new(global_table, key, value)
+   assert(_G == global_table)
+   local reserved_names =
+      {"Class", "Object", "Function", "ClassRef", "Instance",
+       "Boolean", "String", "Number"}
+   for _, v in pairs(reserved_names) do
+      assert(key ~= v)
+   end
+   rawset(_G, key, value)
+end
+
+----------------------------------------------------------------------------------
+
 recording_global_forward_decls = false
+
 ----------------------------------------------------------------------------------
+
 function set_global_indexhook()
    old_meta = getmetatable(_G)
    new_meta = old_meta or {}
@@ -55,24 +75,37 @@ function set_global_indexhook()
    else
       new_meta.__index = class_hook
    end
+   local prev_newindex_func = new_meta.__newindex
+   if prev_newindex_func then
+      new_meta.__newindex = call_chain(verify_restricted_new, prev_newindex_func)
+   else
+      new_meta.__newindex = verify_restricted_new
+   end
    setmetatable(_G, new_meta)
 end
+
 ----------------------------------------------------------------------------------
+
 set_global_indexhook()
 
 --================================================================================
+
 function wrong_type_decl_error(name, decl_type)
    local message = "Member "..(name or "unknown").." declared with incomaptible\
      type: "..type(decl_type)..", only classes allowed."
    error(message)
 end
+
 --================================================================================
+
 function wrong_type_assign_error(ex_type, decl_type)
    local message = "Member "..(name or "unknown").." declared with incomaptible\
      tpye: "..type(decl_type)..". Exisiting of type "..ex_type.classname.."."
    error(message)
 end
+
 --================================================================================
+
 function wrong_super_class_error(super_class)
    local message = "Wrong super class of type "..type(super_class).." / "
      ..(super_class and super_class.classname or "").."."
@@ -80,12 +113,15 @@ function wrong_super_class_error(super_class)
 end
 
 --================================================================================
+
 function front(t)
    return table.remove(t, 1)
 end
 
-
 --================================================================================
+
+----------------------------------------------------------------------------------
+
 function class_impl(argv)
    recording_global_forward_decls = false
 
@@ -97,25 +133,26 @@ function class_impl(argv)
    delegate_to_class_methods(klass)
 
    publish(klass)
+   function klass:delete()
+      _G[self._classname] = nil
+   end
    return klass
 end
+
 ----------------------------------------------------------------------------------
+
 function validated_classname(class_name)
    if not class_name or type(class_name) ~= "string" then
       error("Undefined class name. Usage: Class{'ClassName'}")
    end
-
-   local reserved_names =
-      {"Class", "Object", "Instance", "Boolean", "String", "Number"}
-
-   for i,v in ipairs(reserved_names) do
-      if v == class_name then
-	 error(v.." can't be overridden")
-      end
+   if _G[class_name] then
+      error("Class declaration exists, delete first")
    end
    return class_name
 end
+
 ----------------------------------------------------------------------------------
+
 function validated_superclass(super_class, klass)
    if super_class and (type(super_class) ~= "table" 
 		    or not super_class._classname
@@ -124,14 +161,18 @@ function validated_superclass(super_class, klass)
    end
    return super_class
 end
+
 ----------------------------------------------------------------------------------
+
 function validated_attributes(argv,klass)
    check_all_attr_are_tables(argv, klass._classname)
    local attributes = get_forward_decls(argv, klass)
    attributes = add_other_decls(attributes, argv, klass)
    return attributes
 end
+
 ----------------------------------------------------------------------------------
+
 function check_all_attr_are_tables(argv, klass_name)
    for name, decl_type in pairs(argv) do
       if type(decl_type) ~= "table" and decl_type ~= klass_name then
@@ -139,7 +180,9 @@ function check_all_attr_are_tables(argv, klass_name)
       end
    end
 end
+
 ----------------------------------------------------------------------------------
+
 function get_forward_decls(argv, klass)
    local attr = {}
    for name, decl_type in pairs(argv) do
@@ -150,23 +193,29 @@ function get_forward_decls(argv, klass)
    end
    return attr
 end
+
 ----------------------------------------------------------------------------------
+
 function add_other_decls(attr, argv, klass)
    for name, decl_type in pairs(argv) do
-      check_can_be_assigned(klass[name], decl_type)
+      check_can_be_assigned(klass._super[name], decl_type)
       attr[name] = Attribute:new(decl_type)
    end
    assert(#argv == #attr)
    argv = nil
    return attr
 end
+
 ----------------------------------------------------------------------------------
+
 function check_can_be_assigned(existing, declared)
-   if exisiting and not declared:has_ancestor(existing) then
+   if existing and not declared:has_ancestor(existing._ref) then
       wrong_type_assign_error(existing, declared)
    end
 end
+
 ----------------------------------------------------------------------------------
+
 function delegate_to_class_methods(klass)
    local meta = {}
    local self = klass
@@ -174,10 +223,13 @@ function delegate_to_class_methods(klass)
    meta.__newindex = klass._super.class_set
    setmetatable(klass, meta)
 end
+
 ----------------------------------------------------------------------------------
+
 function publish(klass)
    _G[klass._classname] = klass
 end
+
 --[[
 ----------------------------------------------------------------------------------
 function check_if_name_is_type_conform_with_superclass(klass,name,type)

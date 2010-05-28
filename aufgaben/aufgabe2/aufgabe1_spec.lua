@@ -29,6 +29,7 @@ it("should add 'MyClass' to the global context",
 -------------------------------------------------------------------------------
 it("instances should be of class",
    function()
+      MyClass = nil
       Class{'MyClass', attribute1 = String, attribute2 = MyClass }
       local o = MyClass:new()
       return (o._class == MyClass)
@@ -61,6 +62,7 @@ it("should be ok to have two attributes",
 -------------------------------------------------------------------------------
 it("should raise an error on wrong type assignement",
    function()
+      WithTwoAttributes = nil
       Class{'WithTwoAttributes',
             a1 = Boolean,
             a2 = Number}
@@ -71,7 +73,7 @@ it("should raise an error on wrong type assignement",
       end
       code, err = pcall(WrongAssign, o)
 
-      return o.a2 == 0 and code == false and TypeName(err) == TypeName(String)
+      return o.a2 == 0 and code == false and type(err) == "string"
    end)
 
 -------------------------------------------------------------------------------
@@ -79,8 +81,8 @@ it("should add MagicClass to global context before attribute assignment",
    function()
       MagicClass = nil
       Class{'MagicClass', SelfClassRef = MagicClass }
-      Object = MagicClass:new()
-      Object.SelfClassRef = MagicClass:new()
+      o = MagicClass:new()
+      o.SelfClassRef = MagicClass:new()
       return true
    end)
 
@@ -111,9 +113,12 @@ it("should be possible to override an attribute with same type",
    function()
       Class{'Existing'}
       Class{'SuperExisting', nil, with_existing = Existing}
-      local code = pcall(Class,
-                         {'DuperExisting', SuperExisting, with_existing = Existing})
-      return code
+      Class{'DuperExisting', SuperExisting, with_existing = Existing}
+      o = Exisitng:new()
+      a = DuperExisting:new()
+      a.with_existing = o
+      o = nil
+      a = nil
    end)
 
 -------------------------------------------------------------------------------
@@ -164,6 +169,8 @@ it("should raise an error if a super class has a cylic dependency ",
 -------------------------------------------------------------------------------
 it("should accept convertible assignements",
    function()
+      A = nil
+      B = nil
       Class{'A', ARef = A}
       Class{'B', A}
       AObj = A:new()

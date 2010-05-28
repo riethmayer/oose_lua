@@ -1,7 +1,8 @@
 --================================================================================
 Attribute = {}
 function Attribute:can_accept(value)
-   return self._default_value() and type(value) == type(self._default_value())
+   return type(value) == "table" and value._classname == self._classname
+     or type(value) == type(self._default_value())
 end
 function Attribute:new(declaration)
    assert(type(declaration) == "table")
@@ -68,6 +69,8 @@ Attribute:register_attribute(ClassRef)
 function ClassRef:can_accept(value)
    if value and value._class then
       return value._class:has_ancestor(self._ref)
+   elseif value == nil then
+      return true
    else
       return false
    end

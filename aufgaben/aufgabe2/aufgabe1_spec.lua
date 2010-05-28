@@ -114,11 +114,13 @@ it("should be possible to override an attribute with same type",
       Class{'Existing'}
       Class{'SuperExisting', nil, with_existing = Existing}
       Class{'DuperExisting', SuperExisting, with_existing = Existing}
-      o = Exisitng:new()
+      o = Existing:new()
       a = DuperExisting:new()
       a.with_existing = o
+      success = a.with_existing._class == Existing
       o = nil
       a = nil
+      return success
    end)
 
 -------------------------------------------------------------------------------
@@ -215,14 +217,19 @@ it("should give attributes a higher priority than methods",
       return action_is_string and attribute_has_priority
    end)
 ----------------------------------------------------------------------------------
-it("should give proper error message in case attributes have a wrong class type",
+it("should be possible to delete the value of a class reference",
    function()
-      Class{'ClassWithOneAttribute', action = String}
-      a = ClassWithOneAttribute:new()
-      code, call = pcall(a.action,"5")
-      return code == true
+      Class{'Refered', attr1 = Number}
+      Class{'ClassWithRef', ref = Refered}
+      o = ClassWithRef:new()
+      o.ref = Refered:new()
+      cond1 = o.ref ~= nil and o.ref._class == Refered
+	 and o.ref.attr1 == 0
+      o.ref.attr1 = 5
+      o.ref = nil
+      cond2 = o.ref == nil
+      return cond1 and cond2
    end)
-
 -------------------------------------------------------------------------------
 LSpec:teardown()
 

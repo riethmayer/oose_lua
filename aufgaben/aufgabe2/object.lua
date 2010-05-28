@@ -1,14 +1,27 @@
+require 'basetypes'
+
 Object = {}
 Object._classname = "Object"
 Object._super = nil
 Object._class_attributes = {}
-Object._class_methods = {}
 
+----------------------------------------------------------------------------------
+function Object:class_get(key)
+   return self._class_attributes[key]
+      or self._super and self._super[key]
+end
+----------------------------------------------------------------------------------
+function Object:class_set(key, value)
+   if type(value) ~= "function" then
+      error("You can only define functions")
+   end
+   self._class_attributes[key] = Function:new(value)
+end
+----------------------------------------------------------------------------------
 local class_method_lookup = {
-   __index   = Object._class_methods,
-   __newindex = Object._class_methods}
+   __index   = Object._class_attributes,
+   __newindex = Object._class_attributes}
 setmetatable(Object,class_method_lookup)
-
 ----------------------------------------------------------------------------------
 function Object:new()
    local instance = {}
@@ -18,33 +31,31 @@ function Object:new()
    instance_lookup.__index = Object.get
    instance_lookup.__newindex = Object.set
    setmetatable(instance, instance_lookup)
-   return object
+   return instance
 end
 ----------------------------------------------------------------------------------
-function Object:get(key)
-   found_decl = class_has_accessible_decl(key)
-   if found_attr then
+function Object:get(key)  
+   found_decl = self._class[key]
+   if found_decl then
+      print(key,found_decl._classname)
       return self._attribute_values[key]
-	 or found_decl._default_value
+	 or found_decl._default_value()
    else
       error("No accessible attribute "..key..".")
    end
 end
 ----------------------------------------------------------------------------------
 function Object:set(key, value)
-   found_decl = class_has_accessible_decl(key)
+   found_decl = self._class[key]
+   print(found_decl._classname)
    if found_decl and found_decl:can_accept(value) then
       self._attribute_values[key] = value
    else
-      local value_type = value and value._class._classname
+      local value_type = (value and value._class and value._class._classname)
 	 or type(value)
       error("No attribute "..key.." which can be assigned a "
 	    ..value_type..".")
    end
-end
-----------------------------------------------------------------------------------
-function Object:class_has_accessible_decl(key)
-   return self._class[key]
 end
 ----------------------------------------------------------------------------------
 function Object:has_ancestor(other_class)

@@ -1,4 +1,4 @@
-require 'instance'
+require "instance"
 
 --  Usage: Class{'<classname>' [, <superclass>] [, <variable> = <type>]+ }
 --    * classname (mandatory):
@@ -63,7 +63,7 @@ set_global_indexhook()
 --================================================================================
 function wrong_type_decl_error(name, decl_type)
    local message = "Member "..(name or "unknown").." declared with incomaptible\
-     tpye: "..type(decl_type)..", only classes allowed."
+     type: "..type(decl_type)..", only classes allowed."
    error(message)
 end
 --================================================================================
@@ -94,11 +94,8 @@ function class_impl(argv)
    klass._super = validated_superclass(front(argv), klass) or Object
    klass._class_attributes = validated_attributes(argv,klass)
 
-   klass._class_methods = {}
    delegate_to_class_methods(klass)
-   function klass:new(...)
-      return Instance.new(self, unpack(arg))
-   end
+
    publish(klass)
    return klass
 end
@@ -129,19 +126,26 @@ function validated_superclass(super_class, klass)
 end
 ----------------------------------------------------------------------------------
 function validated_attributes(argv,klass)
+   check_all_attr_are_tables(argv, klass._classname)
    local attributes = get_forward_decls(argv, klass)
    attributes = add_other_decls(attributes, argv, klass)
    return attributes
 end
 ----------------------------------------------------------------------------------
+function check_all_attr_are_tables(argv, klass_name)
+   for name, decl_type in pairs(argv) do
+      if type(decl_type) ~= "table" and decl_type ~= klass_name then
+	 wrong_type_decl_error(name, decl_type)
+      end
+   end
+end
+----------------------------------------------------------------------------------
 function get_forward_decls(argv, klass)
    local attr = {}
    for name, decl_type in pairs(argv) do
-      if decl_type == klass.classname then
+      if decl_type == klass._classname then
 	 argv[name] = nil
-	 attr[name] = klass
-      elseif type(decl_type) ~= "table" then
-	 wrong_type_decl_error(name, decl_type)
+	 attr[name] = ClassRef:new(klass)
       end
    end
    return attr
@@ -150,7 +154,7 @@ end
 function add_other_decls(attr, argv, klass)
    for name, decl_type in pairs(argv) do
       check_can_be_assigned(klass[name], decl_type)
-      attr[name] = decl_type:new()
+      attr[name] = Attribute:new(decl_type)
    end
    assert(#argv == #attr)
    argv = nil
@@ -165,13 +169,14 @@ end
 ----------------------------------------------------------------------------------
 function delegate_to_class_methods(klass)
    local meta = {}
-   meta.__index = self._super
-   meta.__newindex = self._super
+   local self = klass
+   meta.__index = klass._super.class_get
+   meta.__newindex = klass._super.class_set
    setmetatable(klass, meta)
 end
 ----------------------------------------------------------------------------------
 function publish(klass)
-   _G[klass.classname] = klass
+   _G[klass._classname] = klass
 end
 --[[
 ----------------------------------------------------------------------------------

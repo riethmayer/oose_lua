@@ -83,7 +83,11 @@ function validate_superclass_or_default_to_object(argv)
    if(class_name and class_exists(class_name)) then
       result = class_name
    else
-      result = Object
+      if(class_name ~= nil) then
+         error(class_name .. " is not a valid super class.")
+      else
+         result = Object
+      end
    end
    return result
 end

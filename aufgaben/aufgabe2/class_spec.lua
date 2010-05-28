@@ -83,7 +83,7 @@ it("should add MagicClass to global context before attribute assignment",
       return MagicClass._class_attributes.automagic == MagicClass
    end)
 ----------------------------------------------------------------------------------
-it("should initialize basic intance variables",
+it("should initialize basic instance variables",
    function()
       Foo = nil
       Class{'Foo', id = Number, flag = Boolean, msg = String}

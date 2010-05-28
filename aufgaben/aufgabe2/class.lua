@@ -40,6 +40,8 @@ function Class(argv)
    klass.new         = function(self, params)
                           local instance = klass._super.new(self) -- assigns _class
                           local instance_variables = {}
+                          local super_variables = klass._super:new()
+                          super_variables= super_variables._instance_variables or {}
                           for name, type in pairs(klass._class_attributes) do
                              if(type == klass) then
                                 instance_variables[name] = nil
@@ -50,7 +52,12 @@ function Class(argv)
                           -- first delegate to instance variables
                           local instance_delegation = {
                              __index = function(self, key)
-                                          return instance_variables[key]
+                                          local r = instance_variables[key]
+                                          -- r may be 'false' (a boolean value)
+                                          if(r == nil) then
+                                             r = super_variables[key]
+                                          end
+                                          return r
                                        end
                           }
                           setmetatable(instance, instance_delegation)
@@ -60,8 +67,9 @@ function Class(argv)
                              __index = function(self,key)
                                           return instance._class[key]
                                        end
-                          }
+                          }                          
                           setmetatable(instance_variables, class_delegation)
+                          instance._instance_variables = instance_variables
                           return instance
                        end
    -- third delegate to superclass

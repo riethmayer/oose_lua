@@ -10,7 +10,7 @@ function n_class_aspect:validated_decl_name(decl_name)
       self:print_usage()
    end
    if _G[decl_name] then
-      error("Declared Name exists already. Delete first")
+      error("Declared name: "..decl_name.." exists already. Delete first")
    end
    return decl_name
 end
@@ -29,10 +29,18 @@ end
 
 ----------------------------------------------------------------------------------
 
+function n_class_aspect:redeclare_check(klass, name, decl_type)
+   local existing_incompatible = self:is_assignable(klass, name, decl_type)
+   if existing_incompatible ~= nil then
+      wrong_type_assign_error(existing, declared)
+   end
+end
+
+----------------------------------------------------------------------------------
+
 function n_class_aspect:check_and_create_attributes(argv, obj, ex_attr)
    local attr = ex_attr or {}
    for name, decl_type in pairs(argv) do
-      self:is_assignable(obj, name, decl_type)
       attr[name] = Attribute:new(decl_type)
    end
    assert(#argv == #attr)

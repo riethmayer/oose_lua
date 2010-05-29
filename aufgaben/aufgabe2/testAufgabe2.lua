@@ -1,5 +1,6 @@
 -- Hier muss der Name eurer LOS Implementierung rein
 require("class")
+require("aspect")
 
 Class{'Fahrzeug', geschwindigkeit = Number}
 

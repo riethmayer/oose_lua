@@ -143,7 +143,10 @@ function class_impl(argv)
    klass._classname = n_class:validated_decl_name(front(argv))
    klass._super = n_class:validated_superclass(front(argv), klass) or Object
    klass._class_attributes = n_class:validated_attributes(argv,klass)
+   klass._aspects = {}
+   setmetatable(klass._aspects, n_aspect_array_methods.mt)
 
+  -- n_class:delegate_to_class_methods(klass)
 
    n_class:publish(klass._classname, klass)
    setmetatable(klass, n_class_methods.mt)
@@ -172,7 +175,24 @@ function n_class:check_attr(argv, klass)
    for name, decl_type in pairs(argv) do
       if type(decl_type) ~= "table" and decl_type ~= klass._classname then
 	 wrong_type_decl_error(name, decl_type)
+      else
+	 self:redeclare_check(klass, name, decl_type)
       end
+   end
+end
+
+----------------------------------------------------------------------------------
+
+function n_class:is_assignable(klass, name, type)
+   return self:check_can_be_assigned(klass._super[name], type)
+end
+
+
+----------------------------------------------------------------------------------
+
+function n_class:check_can_be_assigned(existing, declared)
+   if existing and not existing:redeclarable_with(declared) then
+      return existing
    end
 end
 
@@ -197,22 +217,19 @@ function n_class:get_forward_decls(argv, klass)
 end
 
 ----------------------------------------------------------------------------------
-
-function n_class:is_assignable(klass, name, type)
-   self:check_can_be_assigned(klass._super[name], type)
-end
-
-----------------------------------------------------------------------------------
-
-function n_class:check_can_be_assigned(existing, declared)
-   if existing and not existing:redeclarable_with(declared) then
-      wrong_type_assign_error(existing, declared)
-   end
-end
-
-----------------------------------------------------------------------------------
 n_class_methods = {}
 n_class_methods.mt = {}
+----------------------------------------------------------------------------------
+
+function n_class_methods:_enable_aspect(aspect) 
+   self._aspects:append(aspect)
+end
+
+----------------------------------------------------------------------------------
+
+function n_class_methods:_disable_aspect(aspect)
+   self._aspects:remove(aspect)
+end
 
 ----------------------------------------------------------------------------------
 
@@ -223,9 +240,21 @@ end
 ----------------------------------------------------------------------------------
 
 function n_class_methods.mt:__index(key)
-   return self._class_attributes[key]
-      or n_class_methods[key]
+   local wrapper = self._aspects:pattern_wrapper(key)
+   
+   func_attr = self._class_attributes[key]
       or self._super and self._super[key]
+      or n_class_methods[key]
+
+   assert(not wrapper or func_attr)
+   if wrapper then
+      assert(func_attr._classname == "Function")
+      wrapper:set_func(func_attr)
+      return wrapper
+   else
+      return func_attr
+	 or self._aspects[key]
+   end
 end
 
 ----------------------------------------------------------------------------------
@@ -235,4 +264,69 @@ function n_class_methods.mt:__newindex(key, value)
       error("You can only define functions")
    end
    self._class_attributes[key] = Function:new(value)
+end
+
+----------------------------------------------------------------------------------
+n_aspect_array_methods = {}
+n_aspect_array_methods.mt = {}
+----------------------------------------------------------------------------------
+
+function  n_aspect_array_methods:append(aspect)
+   local pos = self:find_aspect_pos(aspect)
+   assert(pos == nil)
+   table.insert(self, aspect)
+end
+
+
+----------------------------------------------------------------------------------
+
+function  n_aspect_array_methods:remove(aspect)
+   local pos = self:find_aspect_pos(aspect)
+   assert(pos ~= nil)
+   table.remove(self, pos)
+end
+
+----------------------------------------------------------------------------------
+
+function  n_aspect_array_methods:find_aspect_pos(aspect)
+   for i,v in ipairs(self) do
+      if v == aspect then
+	 return i
+      end
+   end
+end
+
+----------------------------------------------------------------------------------
+
+function n_aspect_array_methods:find_key(key)
+   local found_key = nil
+   for i,v in ipairs(self) do
+      local has_key = v[key]
+      if has_key ~= nil then
+	 found_key = has_key
+      end
+   end
+   return found_key
+end
+
+----------------------------------------------------------------------------------
+
+function n_aspect_array_methods:pattern_wrapper(key)
+   local ret = self:find_key(key)
+   if ret and ret._classname == "AspectWrapper" then
+      return ret
+   end
+end
+
+----------------------------------------------------------------------------------
+
+function n_aspect_array_methods.mt:__index(key)
+   return n_aspect_array_methods[key]
+      or self:find_key(key)
+end
+
+----------------------------------------------------------------------------------
+
+function n_aspect_array_methods.mt:__newindex(key, value)
+   error("Don't insert aspects directly, but call append")
 end

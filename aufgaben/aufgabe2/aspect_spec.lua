@@ -4,26 +4,41 @@ require 'lspec'
 
 LSpec:setup()
 
+----------------------------------------------------------------------------------
+
 it("Wrong Aspect declaration should throw an error",
    function()
       code, err = pcall(Aspect, {'WrongAspect', iswrong})
       return code == false
    end)
 
+----------------------------------------------------------------------------------
+
+function same_type_aspect(Type)
+   Class{'A', attr = Type}
+   Aspect{'One', 
+	  adapts = {A},
+	  attributes = { attr = Type}}
+   o = A:new()
+   One = nil
+   A = nil
+   return o.attr == Type._default_value()
+end
+
 
 ----------------------------------------------------------------------------------
 
-it("Should be okay to overwrite an attribute with same type",
+it_u("Should be okay to overwrite an attribute with same type",
    function()
-      Class{'A', attr = Boolean}
-      res, err = pcall(Aspect, {'One', 
-	     adapts = {A},
-	     attributes = { attr = Boolean}}
-		    )
-      One = nil
-      A = nil
-      return  res == true
-   end)
+      local Types = {Boolean, String, Number}
+      for _,v in pairs(Types) do
+	 if not same_type_aspect(v) then
+	    return false
+	 end
+      end
+      return true
+   end
+)
 
 ----------------------------------------------------------------------------------
 
@@ -32,36 +47,70 @@ it("Should throw an error on overwriting class attributes",
       Class{'A', attr = Boolean}
       res, err = pcall(Aspect, {'One', 
 	     adapts = {A},
-	     attributes = { attr = Number}}
-		    )
+	     attributes = { attr = Number}})
       One = nil
       A = nil
-      return  res == false
+      return res == false
    end)
 
 ----------------------------------------------------------------------------------
 
-it("a disabled Aspect should behave as if he is not there",
+it("a Aspect should behave as if he is not there",
    function()
       Class{'M'}
-      function M:DoSome()
+      local c_flag = false
+      local a_flag = false
+
+      function M:set_flag()
+	 c_flag = true
       end
+
       Aspect{'WhellyAspect',
 	     adapts = {M},
-	     before = {print = 'DoSome'}}
-      local before = false
-      function WhellyAspect:print()
+	     before = {flag = 'set_flag'}}
+      function WhellyAspect:flag()
 	 before = true
 	 print("before call")
       end
 
       inst = M:new()
-      inst:DoSome()
-      condition1 = before == false
+      inst:set_flag()
+      return c_flag == true and a_flag == false
+   end)
+
+----------------------------------------------------------------------------------
+
+it("a Aspect should be able to alter behaviour",
+   function()
+      M = nil
+      WhellyAspect = nil
+      Class{'M'}
+      Aspect{'WhellyAspect',
+	     adapts = {M},
+	     attributes = {new_attr = Boolean}}
+
       WhellyAspect:enable()
-      inst:DoSome()
-      condition2 = before == true
-      return condition1 and condition2
+      inst = M:new()
+      return inst.new_attr == false
+   end)
+
+----------------------------------------------------------------------------------
+
+it("An value of an aspect attribute should be the same on reenabling",
+   function()
+      M = nil
+      WhellyAspect = nil
+      Class{'M'}
+      Aspect{'WhellyAspect',
+	     adapts = {M},
+	     attributes = {new_attr = Boolean}}
+
+      inst = M:new()
+      WhellyAspect:enable()
+      inst.new_attr = true
+      WhellyAspect:disable()
+      WhellyAspect:enable()
+      return inst.new_attr == true
    end)
 
 ----------------------------------------------------------------------------------

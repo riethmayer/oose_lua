@@ -10,25 +10,19 @@ local class_method_lookup = {
    __index   = Object._class_attributes,
    __newindex = Object._class_attributes}
 setmetatable(Object,class_method_lookup)
-----------------------------------------------------------------------------------
-function Object:class_get(key)
-   return self._class_attributes[key]
-      or self._super and self._super[key]
-end
-----------------------------------------------------------------------------------
-function Object:class_set(key, value)
-   if type(value) ~= "function" then
-      error("You can only define functions")
-   end
-   self._class_attributes[key] = Function:new(value)
-end
+
 ----------------------------------------------------------------------------------
 function Object:get(key)
    before_call(self)
    found_decl = self._class[key]
    if found_decl then
-      return self._attribute_values[key]
-	 or found_decl._default_value()
+      local value = self._attribute_values[key]
+      local default = found_decl._default_value()
+      if value == nil then
+	 return default -- might also be nil in case of class_ref
+      else
+	 return value
+      end
    else
       error("No accessible attribute "..key..".")
    end

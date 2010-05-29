@@ -105,9 +105,23 @@ it("should not be possible to override an attribute with different type",
    end)
 
 -------------------------------------------------------------------------------
--- I don't think this makes any sense at all
--- why redeclaring a element of the same type,
--- this is clearly not intended, useless besides.
+
+it("should be possible to override an attribute with same type",
+   function()
+      Class{'One', attr = Boolean}
+      Class{'Two', One, attr = Boolean}
+
+      o = One:new()
+      t = Two:new()
+      o.attr = true
+      t.attr = false
+      success = o.attr == true and t.attr == false
+      o = nil
+      t = nil
+      return success
+   end)
+
+-------------------------------------------------------------------------------
 
 it("should be possible to override an attribute with same type",
    function()
@@ -124,9 +138,6 @@ it("should be possible to override an attribute with same type",
    end)
 
 -------------------------------------------------------------------------------
--- I don't think this makes any sense at all
--- why redeclaring a element of the same type,
--- this is clearly not intended, useless besides.
 
 it("should be possible to override an attribute with same type and add more",
    function()

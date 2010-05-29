@@ -32,3 +32,12 @@ function it(text, block)
       LSpec.test_results = LSpec.test_results .. "E"
    end
 end
+
+-- a unsafe version which doesn't catch errors but prints the complete stack trace
+
+----------------------------------------------------------------------------------
+
+function it_u(text, block)
+   local ret = block()
+   it(text, function() return ret end)
+end

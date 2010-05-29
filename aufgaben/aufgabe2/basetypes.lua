@@ -1,8 +1,10 @@
 --================================================================================
 Attribute = {}
+function Attribute:redeclarable_with(attr)
+   return attr and attr._classname == self._classname
+end
 function Attribute:can_accept(value)
-   return type(value) == "table" and value._classname == self._classname
-     or type(value) == type(self._default_value())
+   return type(value) == type(self._default_value())
 end
 function Attribute:new(declaration)
    assert(type(declaration) == "table")
@@ -48,6 +50,9 @@ Function = {}
 Function._super = Attribute
 Function._classname = "Function"
 Attribute:register_attribute(Function)
+function Function:redeclarable_with(func)
+   return false
+end
 function Function:can_accept(value)
    return false
 end
@@ -69,11 +74,14 @@ ClassRef = {}
 ClassRef._super = Attribute
 ClassRef._classname = "ClassRef"
 Attribute:register_attribute(ClassRef)
+function ClassRef:redeclarable_with(class)
+   return class:has_ancestor(self._ref)
+end
 function ClassRef:can_accept(value)
-   if value and value._class then
-      return value._class:has_ancestor(self._ref)
-   elseif value == nil then
+   if value == nil then
       return true
+   elseif value._class then
+      return self:redeclarable_with(value._class)
    else
       return false
    end

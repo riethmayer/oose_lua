@@ -1,3 +1,4 @@
+require 'class_aspect_shared'
 require 'instance'
 require 'self_super_trap'
 
@@ -91,6 +92,18 @@ set_global_indexhook()
 
 --================================================================================
 
+function print_usage()
+   print("Syntax:\
+	 Class{'Name',\
+	       attribute_name = Type,\
+	       attr1 = Boolean,\
+	       attr2 = String,\
+	       attr3 = Number,\
+	       attr4 = OtherClass}")
+end
+
+--================================================================================
+
 function wrong_type_decl_error(name, decl_type)
    local message = "Member "..(name or "unknown").." declared with incomaptible\
      type: "..type(decl_type)..", only classes allowed."
@@ -127,34 +140,22 @@ function class_impl(argv)
    recording_global_forward_decls = false
 
    local klass = {}
-   klass._classname = validated_classname(front(argv))
-   klass._super = validated_superclass(front(argv), klass) or Object
-   klass._class_attributes = validated_attributes(argv,klass)
+   klass._classname = n_class:validated_decl_name(front(argv))
+   klass._super = n_class:validated_superclass(front(argv), klass) or Object
+   klass._class_attributes = n_class:validated_attributes(argv,klass)
 
-   delegate_to_class_methods(klass)
 
-   publish(klass)
-   function klass:delete()
-      _G[self._classname] = nil
-   end
+   n_class:publish(klass._classname, klass)
+   setmetatable(klass, n_class_methods.mt)
    return klass
 end
 
 ----------------------------------------------------------------------------------
-
-function validated_classname(class_name)
-   if not class_name or type(class_name) ~= "string" then
-      error("Undefined class name. Usage: Class{'ClassName'}")
-   end
-   if _G[class_name] then
-      error("Class declaration exists, delete first")
-   end
-   return class_name
-end
-
+n_class = {}
+setmetatable(n_class, {__index = n_class_aspect})
 ----------------------------------------------------------------------------------
 
-function validated_superclass(super_class, klass)
+function n_class:validated_superclass(super_class, klass)
    if super_class and (type(super_class) ~= "table"
 		    or not super_class._classname
 		    or super_class:has_ancestor(klass)) then
@@ -163,20 +164,13 @@ function validated_superclass(super_class, klass)
    return super_class
 end
 
-----------------------------------------------------------------------------------
-
-function validated_attributes(argv,klass)
-   check_all_attr_are_tables(argv, klass._classname)
-   local attributes = get_forward_decls(argv, klass)
-   attributes = add_other_decls(attributes, argv, klass)
-   return attributes
-end
+-- Point of customisation
 
 ----------------------------------------------------------------------------------
 
-function check_all_attr_are_tables(argv, klass_name)
+function n_class:check_attr(argv, klass)
    for name, decl_type in pairs(argv) do
-      if type(decl_type) ~= "table" and decl_type ~= klass_name then
+      if type(decl_type) ~= "table" and decl_type ~= klass._classname then
 	 wrong_type_decl_error(name, decl_type)
       end
    end
@@ -184,7 +178,14 @@ end
 
 ----------------------------------------------------------------------------------
 
-function get_forward_decls(argv, klass)
+function n_class:make_attributes(argv, klass)
+   local attr = self:get_forward_decls(argv, klass)
+   return self:check_and_create_attributes(argv, klass, attr)
+end
+
+----------------------------------------------------------------------------------
+
+function n_class:get_forward_decls(argv, klass)
    local attr = {}
    for name, decl_type in pairs(argv) do
       if decl_type == klass._classname then
@@ -197,68 +198,41 @@ end
 
 ----------------------------------------------------------------------------------
 
-function add_other_decls(attr, argv, klass)
-   for name, decl_type in pairs(argv) do
-      check_can_be_assigned(klass._super[name], decl_type)
-      attr[name] = Attribute:new(decl_type)
-   end
-   assert(#argv == #attr)
-   argv = nil
-   return attr
+function n_class:is_assignable(klass, name, type)
+   self:check_can_be_assigned(klass._super[name], type)
 end
 
 ----------------------------------------------------------------------------------
 
-function check_can_be_assigned(existing, declared)
-   if existing and not declared:has_ancestor(existing._ref) then
+function n_class:check_can_be_assigned(existing, declared)
+   if existing and not existing:redeclarable_with(declared) then
       wrong_type_assign_error(existing, declared)
    end
 end
 
 ----------------------------------------------------------------------------------
+n_class_methods = {}
+n_class_methods.mt = {}
 
-function delegate_to_class_methods(klass)
-   local meta = {}
-   local self = klass
-   meta.__index = klass._super.class_get
-   meta.__newindex = klass._super.class_set
-   setmetatable(klass, meta)
+----------------------------------------------------------------------------------
+
+function n_class_methods:delete()
+   _G[self._classname] = nil
 end
 
 ----------------------------------------------------------------------------------
 
-function publish(klass)
-   _G[klass._classname] = klass
+function n_class_methods.mt:__index(key)
+   return self._class_attributes[key]
+      or n_class_methods[key]
+      or self._super and self._super[key]
 end
 
---[[
 ----------------------------------------------------------------------------------
-function check_if_name_is_type_conform_with_superclass(klass,name,type)
-   if(klass == nil) then
-      return true
+
+function n_class_methods.mt:__newindex(key, value)
+   if type(value) ~= "function" then
+      error("You can only define functions")
    end
-   for super_name, super_type in pairs(klass._class_attributes) do
-      if(super_name == name) then
-         if(klass == super_type) then
-            return true
-         end
-         if(not is_superclass(type, super_type)) then
-            type_mismatch(type, super_type)
-         end
-      end
-   end
-   return true
+   self._class_attributes[key] = Function:new(value)
 end
--- Class{'Classname', foo = <Class> } => Classname._attributes = {foo = <Class>}
--- Checks existence of <Class> and whether foo has been defined in Object already.
--- If foo has been defined in Object already, <Class> must be equal to or deriving from foo._class._super._attributes[foo].
--- Class{'Classname', Superclass, foo = <Class>} must check compatibility for Superclass and its superclass's attributes.
-----------------------------------------------------------------------------------
-function is_superclass(type, klass)
-   return type.classname == klass.classname or is_superclass(type._super, klass)
-end
-----------------------------------------------------------------------------------
-function type_mismatch(klass1, klass2)
-   error("Type mismatch: "..klass1.." is incompatible to "..klass2..".")
-end
-]]--

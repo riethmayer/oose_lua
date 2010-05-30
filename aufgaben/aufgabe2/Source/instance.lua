@@ -1,6 +1,13 @@
+--[[
+Kilian Müller  210473
+Jan Riethmayer    310326
+Martin Nowak 302066
+]]--
+
+--================================================================================
 dofile("../Source/object.lua")
 dofile("../Source/basetypes.lua")
-
+--================================================================================
 -- instance behavior
 -- Instance is no class, it's a helper to create instances for a given class,
 -- sets the superclass, class and the proper method lookup for those.

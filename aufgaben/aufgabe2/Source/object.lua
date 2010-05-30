@@ -1,5 +1,12 @@
-dofile("../Source/self_super_trap.lua")
+--[[
+Kilian Müller  210473
+Jan Riethmayer    310326
+Martin Nowak 302066
+]]--
 
+--================================================================================
+dofile("../Source/self_super_trap.lua")
+--================================================================================
 Object = {}
 Object._classname = "Object"
 Object._super = nil
@@ -21,11 +28,11 @@ function wrong_value_assignement(name, found_decl, value)
    end
    local msg
    if ex_type then
-      msg = "Existing attribute "..name.." of type "..ex_type.." cannot be\
-      assigned a value of type "..value_type.."."
+      msg = "Existing attribute "..name.." of type "..ex_type.." cannot be "
+      .."assigned a value of type "..value_type.."."
    else
-      msg = "No declared attribute with "..name..". Cannot assign a\
-      a value of type "..value_type.."."
+      msg = "No declared attribute with "..name..". Cannot assign "
+      .."a value of type "..value_type.."."
    end
    error(msg)
 end

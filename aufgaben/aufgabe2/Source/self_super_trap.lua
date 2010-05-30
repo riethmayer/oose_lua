@@ -1,3 +1,10 @@
+--[[
+Kilian Müller  210473
+Jan Riethmayer    310326
+Martin Nowak 302066
+]]--
+
+--================================================================================
 super = {}
 super_level = 0
 super.trap = "Trap"

@@ -1,4 +1,4 @@
-require("class")
+require("loader")
 
 -- err switch
 -- 0: Kein Fehlertest

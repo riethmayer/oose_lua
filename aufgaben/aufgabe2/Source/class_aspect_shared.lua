@@ -1,7 +1,23 @@
+--[[
+Kilian Müller  210473
+Jan Riethmayer    310326
+Martin Nowak 302066
+]]--
+
+
+--================================================================================
+
+function wrong_type_assign_error(name, ex_type, decl_type)
+   local msg = "Member "..name.."' declared with incomaptible "
+   .."type: "..get_type(decl_type)..". "
+   .."Exisiting attribute is of type "..get_type(ex_type).."."
+   error(msg)
+end
+
+--================================================================================
 -- Shared functions of classes and aspects
 -- functions defined in each module are print_usage, make_attributes, check_attr
 ----------------------------------------------------------------------------------
-
 n_class_aspect = {}
 ----------------------------------------------------------------------------------
 

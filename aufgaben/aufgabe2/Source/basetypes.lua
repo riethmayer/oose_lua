@@ -1,3 +1,9 @@
+--[[
+Kilian Müller  210473
+Jan Riethmayer    310326
+Martin Nowak 302066
+]]--
+
 --================================================================================
 Attribute = {}
 function Attribute:redeclarable_with(attr)

@@ -1,13 +1,10 @@
-dofile("../Source/class_aspect_shared.lua")
-dofile("../Source/instance.lua")
-dofile("../Source/self_super_trap.lua")
-
-
 --[[
 Kilian Müller  210473
 Jan Riethmayer    310326
 Martin Nowak 302066
 ]]--
+
+--================================================================================
 
 --  Usage: Class{'<classname>' [, <superclass>] [, <variable> = <type>]+ }
 --    * classname (mandatory):
@@ -31,6 +28,12 @@ Martin Nowak 302066
 --        Class{'Bar', foo = Foo }
 --        Class{'Baz', Bar, foo = Bar } must return an error, as Foo and Bar have
 --        nothing in common.
+--================================================================================
+dofile("../Source/class_aspect_shared.lua")
+dofile("../Source/instance.lua")
+dofile("../Source/self_super_trap.lua")
+--================================================================================
+
 ----------------------------------------------------------------------------------
 
 function call_chain(...)
@@ -114,28 +117,19 @@ end
 
 function get_type(obj)
    local stat, d_type = pcall(function() return obj._classname end)
-   if not stat then
-      return type(obj)
-   else
+   if stat and d_type then
       return d_type
+   else
+      return type(obj)
    end
 end
 
 --================================================================================
 
 function wrong_type_decl_error(name, decl_type)
-   local message = "Member "..(name or "unknown").." declared with incomaptible\
-   type: "..get_type(decl_type)..", only classes allowed."
-   error(message)
-end
-
---================================================================================
-
-function wrong_type_assign_error(name, ex_type, decl_type)
-   local msg = "Member "..name.."' declared with incomaptible\
-   type: "..get_type(decl_type)..".\
-   Exisiting attribute is of type "..get_type(ex_type).."."
-   error(message)
+   local msg = "Member "..(name or "unknown").." declared with incomaptible "
+   .."type: "..get_type(decl_type)..", only classes allowed."
+   error(msg)
 end
 
 --================================================================================

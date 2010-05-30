@@ -28,7 +28,7 @@ end
 
 ----------------------------------------------------------------------------------
 
-it_u("Should be okay to overwrite an attribute with same type",
+it_u("should be okay to overwrite an attribute with same type",
    function()
       local Types = {Boolean, String, Number}
       for _,v in pairs(Types) do
@@ -42,7 +42,7 @@ it_u("Should be okay to overwrite an attribute with same type",
 
 ----------------------------------------------------------------------------------
 
-it("Should throw an error on overwriting class attributes",
+it("should throw an error on overwriting class attributes",
    function()
       Class{'A', attr = Boolean}
       res, err = pcall(Aspect, {'One', 
@@ -55,7 +55,7 @@ it("Should throw an error on overwriting class attributes",
 
 ----------------------------------------------------------------------------------
 
-it("a Aspect should behave as if he is not there",
+it("an aspect should behave as if it is not there",
    function()
       Class{'M'}
       local c_flag = false
@@ -79,7 +79,7 @@ it("a Aspect should behave as if he is not there",
 
 ----------------------------------------------------------------------------------
 
-it("a Aspect should be able to alter behaviour",
+it("an Aspect should be able to alter behaviour",
    function()
       M = nil
       WhellyAspect = nil
@@ -95,7 +95,7 @@ it("a Aspect should be able to alter behaviour",
 
 ----------------------------------------------------------------------------------
 
-it_u("a Aspect should match calls if he is enabled",
+it("an aspect should match calls if it is enabled",
    function()
       M = nil
       WhellyAspect = nil
@@ -122,10 +122,71 @@ it_u("a Aspect should match calls if he is enabled",
 
 ----------------------------------------------------------------------------------
 
+it("an aspect should hide adapted class methods",
+   function()
+      M = nil
+      One = nil
+      WhellyAspect = nil
+      Class{'M'}
+      local c_flag = false
+      local a_flag = false
+
+      function M:set_flag()
+	 c_flag = true
+      end
+
+      Aspect{'One',
+	     adapts = {M},
+	     attributes = {num = Number}}
+      function One:set_flag()
+	 a_flag = true
+      end
+
+      inst = M:new()
+      One:enable()
+      cond1 = inst.num == 0
+      inst.num = 4
+      One:disable()
+      cond2 = not pcall(function() return inst.num end)
+      One:enable()
+      inst:set_flag()
+      cond3 = c_flag == false and a_flag == true
+      One:disable()
+      a_flag = false
+      c_flage = false
+      inst:set_flag()
+      cond4 = c_flag == true and a_flag == false
+      return cond1 and cond2 and cond3 and cond4
+   end)
+
+----------------------------------------------------------------------------------
+
+it("an aspect-mthod of a superclass should be found",
+   function()
+      M = nil
+      One = nil
+      Class{'M'}
+      Class{'N', M}
+
+      local a_flag = false
+      Aspect{'One',
+	     adapts = {M}}
+      function One:set_flag()
+	 a_flag = true
+      end
+
+      inst = N:new()
+      One:enable()
+      inst:set_flag()
+      return a_flag == true
+   end)
+
+----------------------------------------------------------------------------------
+
 it("should be possible to chain aspect calls",
    function()
       M = nil
-      WhellyAspect = nil
+      One = nil
       Class{'M'}
       function M:call()
       end
@@ -163,6 +224,34 @@ it("should raise an error on recursive calls",
       end
       o = M:new()
       WhellyAspect:enable()
+      local stat, err = pcall(function() return o:call() end)
+      return stat == false
+   end)
+
+----------------------------------------------------------------------------------
+
+it("should raise an error on complicated recursive calls",
+   function()
+      M = nil
+      WhellyAspect = nil
+      Class{'M'}
+      Aspect{'One',
+	     adapts = {M},
+	     attributes = {new_attr = Boolean},
+	     before = {fi = "call", se = "fi", th = "se"}}
+      Aspect{'Two',
+	     adapts  = {M},
+	     before = {fi = "th"}}
+      
+      function M:call()
+      end
+      function One:fi() end
+      function One:se() end
+      function One:th() end
+      function Two:fi() end
+      o = M:new()
+      One:enable()
+      Two:enable()
       local stat, err = pcall(function() return o:call() end)
       return stat == false
    end)
@@ -508,24 +597,45 @@ it_u("should allow super/self calls while aspect counts",
 
 ----------------------------------------------------------------------------------
 
-it("Aspects should be inherited",
-   function()
-      return false
-   end)
-
 it("an error should be thrown if an Aspect method gets called which is not declared",
    function()
-      return false
+      M = nil
+      One = nil
+      Class{'M'}
+      Aspect{'One', adapts = {M}}
+
+      One:enable()
+      o = M:new()
+      res = pcall(function() o:call() end)
+      return res == false
    end)
 
-it("Aspect methods should overwrite object methods",
-   function()
-      return false
-   end)
+----------------------------------------------------------------------------------
 
 it("If a before method returns false the original method should not be executed",
    function()
-      return false
+      M = nil
+      One = nil
+      Class{'M'}
+      local a_flag = false
+      local b_flag = false
+      local c_flag = false
+
+      function M:call()
+	 c_flag = true
+      end
+      Aspect{'One', adapts={M}, before={b_call='call'}, after={a_call='call'}}
+      function One:b_call()
+	 a_flag = true
+	 return false
+      end
+      function One:a_call()
+	 b_flag = true
+      end
+      o = M:new()
+      One:enable()
+      o:call()
+      return a_flag == true and b_flag == false and c_flag == false
    end)
 
 LSpec:teardown()

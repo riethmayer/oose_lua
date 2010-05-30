@@ -87,12 +87,13 @@ function set_global_indexhook()
 end
 
 ----------------------------------------------------------------------------------
-
 set_global_indexhook()
-
+--================================================================================
+n_class = {}
+setmetatable(n_class, {__index = n_class_aspect})
 --================================================================================
 
-function print_usage()
+function n_class:print_usage()
    print("Syntax:\
 	 Class{'Name',\
 	       attribute_name = Type,\
@@ -167,7 +168,7 @@ function class_impl(argv)
    klass._super = n_class:validated_superclass(front(argv), klass) or Object
    klass._class_attributes = n_class:validated_attributes(argv,klass)
 
-   n_aspect_array_methods.init(klass)
+   n_aspect_array_methods.init_aspect_array(klass)
    setmetatable(klass._aspects, n_aspect_array_methods.mt)
 
   -- n_class:delegate_to_class_methods(klass)
@@ -177,9 +178,6 @@ function class_impl(argv)
    return klass
 end
 
-----------------------------------------------------------------------------------
-n_class = {}
-setmetatable(n_class, {__index = n_class_aspect})
 ----------------------------------------------------------------------------------
 
 function n_class:validated_superclass(super_class, klass)
@@ -263,10 +261,10 @@ end
 
 function n_class_methods.mt:__index(key)
  
-   func_attr = self._class_attributes[key]
+   local func_attr = self._aspects[key]
+      or self._class_attributes[key]
       or self._super and self._super[key]
       or n_class_methods[key]
-      or self._aspects[key]
 
    if type(func_attr) == "table" and func_attr._classname == "Function" then
       local wrapper = self._aspects:pattern_wrapper(self, func_attr, key)
@@ -290,7 +288,8 @@ n_aspect_array_methods = {}
 n_aspect_array_methods.mt = {}
 n_string_array_methods = {}
 ----------------------------------------------------------------------------------
-function n_aspect_array_methods.init(klass)
+
+function n_aspect_array_methods.init_aspect_array(klass)
    klass._aspects = {}
    klass._aspects._in_wrapping = {}
    setmetatable(klass._aspects, n_aspect_array_methods.mt)
@@ -298,12 +297,13 @@ function n_aspect_array_methods.init(klass)
 		{__index = n_string_array_methods})
 end
 
+----------------------------------------------------------------------------------
+
 function  n_aspect_array_methods:append(aspect)
    local pos = self:find_aspect_pos(aspect)
    assert(pos == nil)
    table.insert(self, aspect)
 end
-
 
 ----------------------------------------------------------------------------------
 

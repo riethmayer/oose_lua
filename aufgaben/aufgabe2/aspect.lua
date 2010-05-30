@@ -1,7 +1,11 @@
 require 'class_aspect_shared'
 
+----------------------------------------------------------------------------------
+n_aspect = {}
+setmetatable(n_aspect, {__index = n_class_aspect})
+----------------------------------------------------------------------------------
 
-function print_usage()
+function n_aspect:print_usage()
    print("Syntax:\
 	 Aspect{'Name',\
 		adapts = {klass, klass2},\
@@ -45,9 +49,6 @@ function Aspect(argv)
 end
 
 ----------------------------------------------------------------------------------
-n_aspect = {}
-setmetatable(n_aspect, {__index = n_class_aspect})
-----------------------------------------------------------------------------------
 
 function n_aspect:validate_arguments(argv)
    local allowed_keys = {"1","attributes", "before", "after", "adapts"}
@@ -56,7 +57,7 @@ function n_aspect:validate_arguments(argv)
       if not (type(k) == "string" and allowed_keys:contains(k)
 	or type(k) == "number" and k == 1) then
 	 self:print_usage()
-	 error("wrong aspect keyword"..k)
+	 error("Wrong aspect keyword "..k)
       end
    end
 end

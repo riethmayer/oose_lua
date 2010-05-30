@@ -1,4 +1,4 @@
-require 'class'
+require("loader")
 
 Class{'A'}
 function A:print()

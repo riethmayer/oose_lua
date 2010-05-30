@@ -1,5 +1,5 @@
 -- Hier muss der Name eurer LOS Implementierung rein
-require "class"
+require("loader")
 
 Class{'Fahrzeug', marke = String, baujahr = Number}
 

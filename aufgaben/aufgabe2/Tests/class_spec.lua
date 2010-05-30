@@ -1,5 +1,6 @@
+require("loader")
 require 'lspec'
-require 'class'
+
 LSpec:setup()
 ----------------------------------------------------------------------------------
 -- Testing Class#validate_classname

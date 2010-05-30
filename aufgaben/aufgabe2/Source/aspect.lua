@@ -1,4 +1,4 @@
-require 'class_aspect_shared'
+dofile("../Source/class_aspect_shared.lua")
 
 ----------------------------------------------------------------------------------
 n_aspect = {}

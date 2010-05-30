@@ -1,5 +1,5 @@
+require("loader")
 require 'lspec'
-require 'basetypes'
 
 LSpec:setup()
 ----------------------------------------------------------------------------------

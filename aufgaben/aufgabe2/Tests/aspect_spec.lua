@@ -1,6 +1,5 @@
-require 'aspect'
-require 'class'
-require 'lspec'
+require("loader")
+require("lspec")
 
 LSpec:setup()
 

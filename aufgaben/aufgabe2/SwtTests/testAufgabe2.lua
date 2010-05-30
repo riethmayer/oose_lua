@@ -1,6 +1,5 @@
 -- Hier muss der Name eurer LOS Implementierung rein
-require("class")
-require("aspect")
+require("loader")
 
 Class{'Fahrzeug', geschwindigkeit = Number}
 

@@ -1,5 +1,5 @@
 require 'lspec'
-require 'instance'
+require("loader")
 
 LSpec:setup()
 ----------------------------------------------------------------------------------

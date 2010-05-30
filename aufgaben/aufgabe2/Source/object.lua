@@ -1,5 +1,4 @@
-require 'basetypes'
-require 'self_super_trap'
+dofile("../Source/self_super_trap.lua")
 
 Object = {}
 Object._classname = "Object"

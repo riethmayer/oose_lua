@@ -1,6 +1,13 @@
-require 'class_aspect_shared'
-require 'instance'
-require 'self_super_trap'
+dofile("../Source/class_aspect_shared.lua")
+dofile("../Source/instance.lua")
+dofile("../Source/self_super_trap.lua")
+
+
+--[[
+Kilian Müller  210473
+Jan Riethmayer    310326
+Martin Nowak 302066
+]]--
 
 --  Usage: Class{'<classname>' [, <superclass>] [, <variable> = <type>]+ }
 --    * classname (mandatory):

@@ -16,7 +16,8 @@ Class{'MyClass', SuperClass,
 require 'lspec'
 -- TODO create LOS.lua and add the Class definition
 -- require 'LOS'
-require 'class'
+require("loader")
+
 LSpec:setup()
 
 -------------------------------------------------------------------------------

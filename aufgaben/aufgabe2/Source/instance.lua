@@ -1,5 +1,6 @@
-require 'object'
-require 'basetypes'
+dofile("../Source/object.lua")
+dofile("../Source/basetypes.lua")
+
 -- instance behavior
 -- Instance is no class, it's a helper to create instances for a given class,
 -- sets the superclass, class and the proper method lookup for those.

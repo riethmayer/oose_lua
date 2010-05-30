@@ -7,6 +7,7 @@ n_class_aspect = {}
 
 function n_class_aspect:validated_decl_name(decl_name)
    if not decl_name or type(decl_name) ~= "string" then
+      print("declared"..decl_name)
       self:print_usage()
    end
    if _G[decl_name] then
@@ -30,9 +31,9 @@ end
 ----------------------------------------------------------------------------------
 
 function n_class_aspect:redeclare_check(klass, name, decl_type)
-   local existing_incompatible = self:is_assignable(klass, name, decl_type)
-   if existing_incompatible ~= nil then
-      wrong_type_assign_error(existing, declared)
+   local incompat_ex = self:is_assignable(klass, name, decl_type)
+   if incompat_ex ~= nil then
+      wrong_type_assign_error(name, incompat_ex, decl_type)
    end
 end
 

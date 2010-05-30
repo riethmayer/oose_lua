@@ -13,8 +13,8 @@ function the_real_trap_maker(key)
 	 i = i - 1
 	 _super_class = _super_class._super
       end
-      super_func = _super_class[_key]
-      ret = super_func(super._curr_self, ...)
+      local super_func = _super_class[_key]
+      local ret = super_func(super._curr_self, ...)
       super_level = super_level - 1
       return ret
    end

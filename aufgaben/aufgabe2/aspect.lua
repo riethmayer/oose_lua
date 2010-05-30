@@ -11,8 +11,8 @@ end
 
 --================================================================================
 
-function wrong_class_list_error()
-   print_usage()
+function wrong_class_list_error(obj)
+   obj:print_usage()
    error("Wrong class list supplied")
 end
 
@@ -27,14 +27,17 @@ end
 ----------------------------------------------------------------------------------
 
 function Aspect(argv)
+   n_aspect:validate_arguments(argv)
    local aspect = {}
    aspect._name = n_aspect:validated_decl_name(front(argv))
    aspect._adaptees = n_aspect:validated_adaptees(argv.adapts,klass)
-   aspect._aspect_attributes =  n_aspect:validated_attributes(argv.attributes, aspect)
+   aspect._aspect_attributes =  n_aspect:validated_attributes(
+      argv.attributes, aspect)
+
    aspect._before_pattern = n_aspect:validated_function_map(argv.before)
    aspect._after_pattern = n_aspect:validated_function_map(argv.after)
-   setmetatable(aspect._before_pattern, { __index = n_pattern.find })
-   setmetatable(aspect._after_pattern, { __index = n_pattern.find })
+   setmetatable(aspect._before_pattern, n_pattern.mt)
+   setmetatable(aspect._after_pattern, n_pattern.mt)
 
    n_aspect:publish(aspect._name, aspect)
    setmetatable(aspect, n_aspect_methods.mt)
@@ -46,13 +49,28 @@ n_aspect = {}
 setmetatable(n_aspect, {__index = n_class_aspect})
 ----------------------------------------------------------------------------------
 
+function n_aspect:validate_arguments(argv)
+   local allowed_keys = {"1","attributes", "before", "after", "adapts"}
+   setmetatable(allowed_keys, {__index = n_string_array_methods})
+   for k, v in pairs(argv) do
+      if not (type(k) == "string" and allowed_keys:contains(k)
+	or type(k) == "number" and k == 1) then
+	 self:print_usage()
+	 error("wrong aspect keyword"..k)
+      end
+   end
+end
+      
+----------------------------------------------------------------------------------
+
 function n_aspect:validated_adaptees(class_list)
    if type(class_list) ~= "table" then
-      wrong_class_list_error()
+      self:wrong_class_list_error()
    end
+
    for _, v in pairs(class_list) do
       if type(v) ~= "table" or not v._classname then
-	 wrong_class_list_error()
+	 self:wrong_class_list_error()
       end
    end
    return class_list
@@ -105,11 +123,11 @@ function n_aspect:validated_function_map(mapping)
       return _mapping
    end
 
-   for k, v in pairs(mapping) do
-      if type(k) ~= "string" or type(v) ~= "string" then
+   for asp_func, pattern in pairs(mapping) do
+      if type(asp_func) ~= "string" or type(pattern) ~= "string" then
 	 error("Wrong function mapping")
       end
-      _mapping[v] = k
+      _mapping[asp_func] = pattern
    end
    return _mapping
 end
@@ -117,7 +135,6 @@ end
 ----------------------------------------------------------------------------------
 n_aspect_methods = {}
 n_aspect_methods.mt = {}
-
 ----------------------------------------------------------------------------------
 
 function n_aspect_methods:delete()
@@ -142,78 +159,66 @@ end
 
 
 ----------------------------------------------------------------------------------
-
-Wrapper = {}
-Wrapper._classname = "AspectWrapper"
-Wrapper.mt = {}
-function Wrapper.mt:__call(...)
-   print("Called with ")
-   print(unpack(...))
-   local wd = self
-   if wd.before ~= nil then
-      local func = wd.aspect[wd.before]
-      func(wd.aspect, unpack(...))
-   end
-   assert(wd.func ~= nil)
-   wd.func(argv[1], ...)
-   if wd.after ~= nil then
-      local func = wd.aspect[wd.after]
-      func(wd.aspect, unpack(arg))
-   end
-end
-
-function Wrapper.mt:__index(key)
-   return Wrapper[key]
-end
-
-function Wrapper:set_func(func)
-   self.func = func
-end
-
-function Wrapper:_default_value()
-   return Wrapper.mt.__call
-end
-
+n_wrapper = {}
 ----------------------------------------------------------------------------------
 
-function Wrapper:new(aspect, before, after)
+function n_wrapper.new(klass, before, middle, after)
    local wd = {}
-   wd.aspect = aspect
    wd.before = before
+   wd.middle = middle
    wd.after = after
-   function call_chain(inst, arg)
-      print("Called with ")
-      print(arg)
-      if wd.before ~= nil then
-	 local func = wd.aspect[wd.before]
-	 func(wd.aspect, arg)
+
+   function call_order(...)
+      while wd.before[1] ~= nil do
+	 local func = front(wd.before)
+	 local ret = func(...)
+	 assert(ret == nil or type(ret) == "boolean")
+	 if ret == false then
+	    return
+	 end
       end
-      assert(wd.func ~= nil)
-      wd.func(inst, arg)
-      if wd.after ~= nil then
-	 local func = wd.aspect[wd.after]
-	 func(wd.aspect, arg)
+      assert(wd.middle ~= nil)
+      wd.middle(...)
+      while wd.after[1] ~= nil do
+	 local func = front(wd.after)
+	 func(...)
       end
    end
-   local wrapped = Function:new(call_chain)
-   function wrapped:set_func(func)
-      wd.func = func
-   end
+
+   local wrapped = Function:new(call_order)
    wrapped._classname = "AspectWrapper"
    return wrapped
 end
 
 ----------------------------------------------------------------------------------
 
-function n_aspect_methods.mt:__index(key)
-   local match_bef = self._before_pattern[key]
-   local match_aft = self._after_pattern[key]
-   if match_bef or match_aft then
-      return Wrapper:new(self, match_bef, match_aft)
-   else
-      return self._aspect_attributes[key]
-	 or n_aspect_methods[key]
+function n_wrapper.build_functions(klass, func_names)
+   local funcs = {}
+   for i, v in ipairs(func_names) do
+      funcs[i] = klass[v]
    end
+   return funcs
+end
+
+----------------------------------------------------------------------------------
+
+function n_aspect_methods:wrap_func(klass, func, key)
+   local match_bef = self._before_pattern:build_rev(key)
+   local match_aft = self._after_pattern:build_fow(key)
+   if match_bef[1] ~= nil or match_aft[1] ~= nil then
+      local bef_funcs = n_wrapper.build_functions(klass, match_bef)
+      local aft_funcs = n_wrapper.build_functions(klass, match_aft)
+      return n_wrapper.new(klass, bef_funcs, func, aft_funcs)
+   else
+      return func
+   end
+end
+
+----------------------------------------------------------------------------------
+
+function n_aspect_methods.mt:__index(key)
+   return self._aspect_attributes[key]
+      or n_aspect_methods[key]
 end
 
 ----------------------------------------------------------------------------------
@@ -227,13 +232,28 @@ end
 
 ----------------------------------------------------------------------------------
 n_pattern = {}
+n_pattern.mt = {__index = n_pattern}
 ----------------------------------------------------------------------------------
 
-function n_pattern:find(key)
-   for pat, func in pairs(self) do
+function n_pattern:build_fow(key)
+   local chain = {}
+   for func, pat in pairs(self) do
       if key == string.match(key, pat) then
-	 return func
+	 table.insert(chain, func)
       end
    end
+   return chain
 end
-   
+
+----------------------------------------------------------------------------------
+
+function n_pattern:build_rev(key)
+   local chain = {}
+   for func, pat in pairs(self) do
+      if key == string.match(key, pat) then
+	 table.insert(chain, 1, func)
+      end
+   end
+   return chain
+end
+

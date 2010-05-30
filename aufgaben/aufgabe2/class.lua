@@ -104,26 +104,49 @@ end
 
 --================================================================================
 
+function get_type(obj)
+   local stat, d_type = pcall(function() return obj._classname end)
+   if not stat then
+      return type(obj)
+   else
+      return d_type
+   end
+end
+
+--================================================================================
+
 function wrong_type_decl_error(name, decl_type)
    local message = "Member "..(name or "unknown").." declared with incomaptible\
-     type: "..type(decl_type)..", only classes allowed."
+   type: "..get_type(decl_type)..", only classes allowed."
    error(message)
 end
 
 --================================================================================
 
-function wrong_type_assign_error(ex_type, decl_type)
-   local message = "Member "..(name or "unknown").." declared with incomaptible\
-     tpye: "..type(decl_type)..". Exisiting of type "..ex_type.classname.."."
+function wrong_type_assign_error(name, ex_type, decl_type)
+   local msg = "Member "..name.."' declared with incomaptible\
+   type: "..get_type(decl_type)..".\
+   Exisiting attribute is of type "..get_type(ex_type).."."
    error(message)
 end
 
 --================================================================================
 
 function wrong_super_class_error(super_class)
-   local message = "Wrong super class of type "..type(super_class).." / "
+   local msg = "Wrong super class of type "..type(super_class).." / "
      ..(super_class and super_class.classname or "").."."
-   error(message)
+   error(msg)
+end
+
+--================================================================================
+
+function wrong_cyclic_aspect(klass, func_key, func_list)
+   local msg = "Wrong cyclic reocurrence of "..func_key.." while\
+   building aspect call wrapper in "..get_type(klass).."."
+   for _,v in pairs(func_list) do
+      msg = msg.." | "..v
+   end
+   error(msg)
 end
 
 --================================================================================
@@ -143,7 +166,8 @@ function class_impl(argv)
    klass._classname = n_class:validated_decl_name(front(argv))
    klass._super = n_class:validated_superclass(front(argv), klass) or Object
    klass._class_attributes = n_class:validated_attributes(argv,klass)
-   klass._aspects = {}
+
+   n_aspect_array_methods.init(klass)
    setmetatable(klass._aspects, n_aspect_array_methods.mt)
 
   -- n_class:delegate_to_class_methods(klass)
@@ -166,8 +190,6 @@ function n_class:validated_superclass(super_class, klass)
    end
    return super_class
 end
-
--- Point of customisation
 
 ----------------------------------------------------------------------------------
 
@@ -240,20 +262,17 @@ end
 ----------------------------------------------------------------------------------
 
 function n_class_methods.mt:__index(key)
-   local wrapper = self._aspects:pattern_wrapper(key)
-   
+ 
    func_attr = self._class_attributes[key]
       or self._super and self._super[key]
       or n_class_methods[key]
+      or self._aspects[key]
 
-   assert(not wrapper or func_attr)
-   if wrapper then
-      assert(func_attr._classname == "Function")
-      wrapper:set_func(func_attr)
+   if type(func_attr) == "table" and func_attr._classname == "Function" then
+      local wrapper = self._aspects:pattern_wrapper(self, func_attr, key)
       return wrapper
    else
       return func_attr
-	 or self._aspects[key]
    end
 end
 
@@ -269,7 +288,15 @@ end
 ----------------------------------------------------------------------------------
 n_aspect_array_methods = {}
 n_aspect_array_methods.mt = {}
+n_string_array_methods = {}
 ----------------------------------------------------------------------------------
+function n_aspect_array_methods.init(klass)
+   klass._aspects = {}
+   klass._aspects._in_wrapping = {}
+   setmetatable(klass._aspects, n_aspect_array_methods.mt)
+   setmetatable(klass._aspects._in_wrapping, 
+		{__index = n_string_array_methods})
+end
 
 function  n_aspect_array_methods:append(aspect)
    local pos = self:find_aspect_pos(aspect)
@@ -311,11 +338,17 @@ end
 
 ----------------------------------------------------------------------------------
 
-function n_aspect_array_methods:pattern_wrapper(key)
-   local ret = self:find_key(key)
-   if ret and ret._classname == "AspectWrapper" then
-      return ret
+function n_aspect_array_methods:pattern_wrapper(klass, func, func_key)
+   if self._in_wrapping:contains(func_key) then
+      wrong_cyclic_aspect(klass, func_key, self._in_wrapping)
    end
+
+   self._in_wrapping:add(func_key)
+   for _, aspect in ipairs(self) do
+      func = aspect:wrap_func(klass, func, func_key)
+   end
+   self._in_wrapping:remove(func_key)
+   return func
 end
 
 ----------------------------------------------------------------------------------
@@ -329,4 +362,35 @@ end
 
 function n_aspect_array_methods.mt:__newindex(key, value)
    error("Don't insert aspects directly, but call append")
+end
+
+----------------------------------------------------------------------------------
+
+function n_string_array_methods:add(string)
+   assert(type(string) == "string")
+   table.insert(self, string)
+end
+
+----------------------------------------------------------------------------------
+
+function n_string_array_methods:remove(string)
+   local index = self:pos(string)
+   assert(index)
+   table.remove(self, index)
+end
+
+----------------------------------------------------------------------------------
+
+function n_string_array_methods:pos(string)
+   for i,v in ipairs(self) do
+      if v == string then
+	 return i
+      end
+   end
+end
+
+----------------------------------------------------------------------------------
+
+function n_string_array_methods:contains(string)
+   return self:pos(string) ~= nil
 end

@@ -36,14 +36,13 @@ it("should not be possible to create a class called String",
 ----------------------------------------------------------------------------------
 it("should not be possible to create a class called Number",
    function()
-      success, message = pcall(Class,{'Number'})
-      return success == false and string.find(message,"This class can't")
+      success = pcall(Class,{'Number'})
+      return success == false
    end)
 ----------------------------------------------------------------------------------
 it("should add 'MyClass' to the global context",
    function()
-      local klass = Class{'MyClass', attribute1 = String, attribute2 = MyClass }
-      assert(klass.classname == "MyClass")
+      Class{'MyClass', attribute1 = String, attribute2 = MyClass }
       return _G['MyClass'] ~= nil
    end)
 ----------------------------------------------------------------------------------
@@ -58,7 +57,11 @@ it("should be ok to have one attribute",
    function()
       Class{'ObjectWithOneAttribute'}
       Class{'WithOneAttribute', attribute1 = ObjectWithOneAttribute}
-      return WithOneAttribute._class_attributes.attribute1 == ObjectWithOneAttribute
+      o = WithOneAttribute:new()
+      cond1 =  o.attribute1 == nil
+      o.attribute1 = ObjectWithOneAttribute:new()
+      cond2 = o.attribute1._class._classname == 'ObjectWithOneAttribute'
+      return cond1 and cond2
    end)
 ----------------------------------------------------------------------------------
 it("should be ok to have two attributes",
@@ -85,8 +88,12 @@ it("should be possible to pass a Boolean as attribute",
 it("should add MagicClass to global context before attribute assignment",
    function()
       MagicClass = nil
-      Class{'MagicClass', automagic = MagicClass }
-      return MagicClass._class_attributes.automagic == MagicClass
+      Class{'MagicClass', automagic = MagicClass}
+      o = MagicClass:new()
+      cond1 = o.automagic == nil
+      o.automagic = MagicClass:new()
+      cond2 = o.automagic._class._classname == 'MagicClass'
+      return cond1 and cond2
    end)
 ----------------------------------------------------------------------------------
 it("should not be possible to override an attribute with different type",
@@ -153,49 +160,23 @@ it("should raise an error if a super class is not a LOS class",
 ----------------------------------------------------------------------------------
 it("should define the basic string class",
    function()
-      local s = String:new()
-      return s == ""
+      Class{"StringHolder", str = String}
+      o = StringHolder:new()
+      return o.str == ""
    end)
 ----------------------------------------------------------------------------------
 it("should define the basic boolean class",
    function()
-      local b = Boolean:new()
-      return b == false
+      Class{"BoolHolder", bool = Boolean}
+      o = BoolHolder:new()
+      return o.bool == false
    end)
 ----------------------------------------------------------------------------------
 it("should define the basic number class",
    function()
-      local n = Number:new()
-      return n == 0
-   end)
-----------------------------------------------------------------------------------
-it("should initialize number with 0",
-   function()
-      Class{'WithZeroInitialized', number = Number}
-      local n = WithZeroInitialized:new()
-      return n.number == 0
-   end)
-----------------------------------------------------------------------------------
-it("should initialize String with ''",
-   function()
-      Class{'WithStringInitialized', string = String}
-      local s = WithStringInitialized:new()
-      return s.string == ''
-   end)
-----------------------------------------------------------------------------------
-it("should initialize Boolean with false",
-   function()
-      Class{'WithBooleanInitialized', bool = Boolean}
-      local b = WithBooleanInitialized:new()
-      return b.bool == false
-   end)
-----------------------------------------------------------------------------------
-it("should initialize a reference with nil",
-   function()
-      Class{'AAA'}
-      Class{'WithReferenceInitialized', ref = AAA}
-      local r = WithReferenceInitialized:new()
-      return r.ref == nil
+      Class{"NumHolder", num = Number}
+      o = NumHolder:new()
+      return o.num == 0
    end)
 ----------------------------------------------------------------------------------
 it("should give attributes a higher priority than methods",
@@ -213,5 +194,33 @@ it("should give attributes a higher priority than methods",
       end
       local attribute_has_priority = type(cwa.action == "string")
       return action_is_string and attribute_has_priority
+   end)
+----------------------------------------------------------------------------------
+it("should allow super calls",
+   function()
+      Class{"M"}
+      Class{"N", M}
+      Class{"O", N}
+
+      local m = false
+      local n = false
+      local o = false
+
+      function M:call()
+	 assert(n == false)
+	 m = true
+      end
+      function N:call()
+	 assert(o == false)
+	 super:call()
+	 n = true
+      end
+      function O:call()
+	 super:call()
+	 o = true
+      end
+      inst = O:new()
+      inst:call()
+      return m == true and n == true and o == true
    end)
 LSpec:teardown()

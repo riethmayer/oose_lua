@@ -1,0 +1,127 @@
+13 14 15 16 17 18 | 19 20 21 22 23 24
+ B           W     | W              B  
+ B           W     | W              B  
+ B           W     | W                 
+ B                 | W                 
+ B                 | W                 
+
+ W                 | B                 
+ W                 | B                 
+ W           B     | B                 
+ W           B     | B              W  
+ W           B     | B              W  
+ 12 11 10 09 08 07 | 06 05 04 03 02 01
+
+ Geschlagene Steine: keine
+ Schwarz ist am Zug und hat nutzbare Wuerfelwerte: 5 3 , Spielzeit 0 s
+
+ Ungueltiger Spielzug (24 20): Zugweite entspricht keinem verfuegbaren Wuerfelwert!
+
+ 13 14 15 16 17 18 | 19 20 21 22 23 24
+ B           W     | W     B        B  
+ B           W     | W                 
+ B           W     | W                 
+ B                 | W                 
+ B                 | W                 
+
+ W                 | B                 
+ W                 | B                 
+ W                 | B                 
+ W           B     | B              W  
+ W           B     | B        B     W  
+ 12 11 10 09 08 07 | 06 05 04 03 02 01
+
+ Geschlagene Steine: keine
+ Weiss ist am Zug und hat nutzbare Wuerfelwerte: 1 4 , Spielzeit 0 s
+
+ 13 14 15 16 17 18 | 19 20 21 22 23 24
+ B           W     | W     B        B  
+ B           W     | W                 
+ B           W     | W                 
+ B                 | W                 
+ B                 | W                 
+
+ W                 | B                 
+ W                 | B                 
+ W                 | B                 
+ W           B     | B        W        
+ W           B     | B        W        
+ 12 11 10 09 08 07 | 06 05 04 03 02 01
+
+ Geschlagene Steine: B 
+ Schwarz ist am Zug und hat nutzbare Wuerfelwerte: 5 3 , Spielzeit 0 s
+
+ Ungueltiger Spielzug (24 22): Auf dem Store liegt noch ein eigener Stein!
+
+ Fehlerhafte eingabe (24, 21), bitte nochmal versuchen!
+
+ 13 14 15 16 17 18 | 19 20 21 22 23 24
+ B           W     | W     B     B  B  
+ B           W     | W                 
+ B           W     | W                 
+ B                 | W                 
+ B                 | W                 
+
+ W                 | B                 
+ W                 | B                 
+ W                 | B                 
+ W           B     | B        W        
+ W           B     | B        W        
+ 12 11 10 09 08 07 | 06 05 04 03 02 01
+
+ Geschlagene Steine: keine
+ Schwarz ist am Zug und hat nutzbare Wuerfelwerte: 3 , Spielzeit 0 s
+
+ 13 14 15 16 17 18 | 19 20 21 22 23 24
+ B           W     | W     B     B     
+ B           W     | W                 
+ B           W     | W                 
+ B                 | W                 
+ B                 | W                 
+
+ W                 | B                 
+ W                 | B                 
+ W                 | B                 
+ W           B     | B        W        
+ W           B     | B        W     B  
+ 12 11 10 09 08 07 | 06 05 04 03 02 01
+
+ Geschlagene Steine: keine
+ Schwarz ist am Zug und hat nutzbare Wuerfelwerte: 3 , Spielzeit 0 s
+
+ 13 14 15 16 17 18 | 19 20 21 22 23 24
+             W     | W                 
+             W     | W                 
+             W     | W                 
+                   | W                 
+                   | W                 
+
+ W                 | B           B     
+ W                 | B           B     
+ W                 | B           B     
+ W                 | B     B  W  B  B  
+ W                 | B     B  W  B  B  
+ 12 11 10 09 08 07 | 06 05 04 03 02 01
+
+ Geschlagene Steine: keine
+ Weiss ist am Zug und hat nutzbare Wuerfelwerte: 2 4 , Spielzeit 0 s
+
+
+ 13 14 15 16 17 18 | 19 20 21 22 23 24
+ B           W     | W              B  
+ B           W     | W              B  
+ B           W     | W                 
+ B                 | W                 
+ B                 | W                 
+
+ W                 | B                 
+ W                 | B                 
+ W           B     | B                 
+ W           B     | B              W  
+ W           B     | B              W  
+ 12 11 10 09 08 07 | 06 05 04 03 02 01
+
+ Geschlagene Steine: keine
+ Schwarz ist am Zug und hat nutzbare Wuerfelwerte: 2 5 , Spielzeit 0 s
+
+ Bitte Zug eingeben: 

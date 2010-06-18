@@ -1,0 +1,12 @@
+Schwarz setzt einen Stein von Point 24 nach 21, Spielzeit: 0s
+Schwarz setzt einen Stein von Point 8 nach 3, Spielzeit: 0s
+Weiss würfelt eine 3 und 3, Spielzeit: 0s
+Weiss setzt einen Stein von Point 1 nach 3, Spielzeit: 0s
+Weiss setzt einen Stein von Point 1 nach 3, Spielzeit: 0s
+Schwarz würfelt eine 1 und 4, Spielzeit: 0s
+Schwarz setzt einen Stein von Point 0 nach 23, Spielzeit: 0s
+Schwarz setzt einen Stein von Point 1 nach 0, Spielzeit: 0s
+Weiss würfelt eine 5 und 5, Spielzeit: 0s
+
+Ein neues Spiel wird gestartet
+

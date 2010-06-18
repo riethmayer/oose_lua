@@ -1,11 +1,11 @@
-require("loader")
+require("sm_loader")
 require("lspec")
 
-LSpec:setup()
+LSpec:setup("Aspect Tests")
 
 ----------------------------------------------------------------------------------
 
-it("Wrong Aspect declaration should throw an error",
+TEST("Wrong Aspect declaration should throw an error",
    function()
       code, err = pcall(Aspect, {'WrongAspect', iswrong})
       return code == false
@@ -27,7 +27,7 @@ end
 
 ----------------------------------------------------------------------------------
 
-it_u("should be okay to overwrite an attribute with same type",
+TEST("should be okay to overwrite an attribute with same type",
    function()
       local Types = {Boolean, String, Number}
       for _,v in pairs(Types) do
@@ -41,7 +41,7 @@ it_u("should be okay to overwrite an attribute with same type",
 
 ----------------------------------------------------------------------------------
 
-it("should throw an error on overwriting class attributes",
+TEST("should throw an error on overwriting class attributes",
    function()
       Class{'A', attr = Boolean}
       res, err = pcall(Aspect, {'One', 
@@ -54,7 +54,7 @@ it("should throw an error on overwriting class attributes",
 
 ----------------------------------------------------------------------------------
 
-it("an aspect should behave as if it is not there",
+TEST("an aspect should behave as if it is not there",
    function()
       Class{'M'}
       local c_flag = false
@@ -78,7 +78,7 @@ it("an aspect should behave as if it is not there",
 
 ----------------------------------------------------------------------------------
 
-it("an Aspect should be able to alter behaviour",
+TEST("an Aspect should be able to alter behaviour",
    function()
       M = nil
       WhellyAspect = nil
@@ -94,7 +94,7 @@ it("an Aspect should be able to alter behaviour",
 
 ----------------------------------------------------------------------------------
 
-it("an aspect should match calls if it is enabled",
+TEST("an aspect should match calls if it is enabled",
    function()
       M = nil
       WhellyAspect = nil
@@ -121,7 +121,7 @@ it("an aspect should match calls if it is enabled",
 
 ----------------------------------------------------------------------------------
 
-it("an aspect should hide adapted class methods",
+TEST("an aspect should hide adapted class methods",
    function()
       M = nil
       One = nil
@@ -160,7 +160,7 @@ it("an aspect should hide adapted class methods",
 
 ----------------------------------------------------------------------------------
 
-it("an aspect-mthod of a superclass should be found",
+TEST("an aspect-method of a superclass should be found",
    function()
       M = nil
       One = nil
@@ -182,7 +182,7 @@ it("an aspect-mthod of a superclass should be found",
 
 ----------------------------------------------------------------------------------
 
-it("should be possible to chain aspect calls",
+TEST("should be possible to chain aspect calls",
    function()
       M = nil
       One = nil
@@ -209,7 +209,7 @@ it("should be possible to chain aspect calls",
 
 ----------------------------------------------------------------------------------
 
-it("should raise an error on recursive calls",
+TEST("should raise an error on recursive calls",
    function()
       M = nil
       WhellyAspect = nil
@@ -229,7 +229,7 @@ it("should raise an error on recursive calls",
 
 ----------------------------------------------------------------------------------
 
-it("should raise an error on complicated recursive calls",
+TEST("should raise an error on complicated recursive calls",
    function()
       M = nil
       WhellyAspect = nil
@@ -257,7 +257,7 @@ it("should raise an error on complicated recursive calls",
 
 ----------------------------------------------------------------------------------
 
-it("shoud break call chain when before returns false",
+TEST("shoud break call chain when before returns false",
    function()
       M = nil
       WhellyAspect = nil
@@ -283,7 +283,7 @@ it("shoud break call chain when before returns false",
 
 ----------------------------------------------------------------------------------
 
-it("should be possible to bind more the one Aspect to the same baseclass method",
+TEST("should be possible to bind more the one Aspect to the same baseclass method",
    function()
       M = nil
       One = nil
@@ -330,7 +330,7 @@ it("should be possible to bind more the one Aspect to the same baseclass method"
 
 ----------------------------------------------------------------------------------
 
-it("should call multiple aspects in the right order",
+TEST("should call multiple aspects in the right order",
    function()
       M = nil
       One = nil
@@ -378,7 +378,7 @@ it("should call multiple aspects in the right order",
 
 ----------------------------------------------------------------------------------
 
-it("should be possible to hook multiple function per aspect",
+TEST("should be possible to hook multiple function per aspect",
    function()
       -- we definetely need a sandbox but setfenv is somewhat difficult
       M = nil
@@ -421,7 +421,7 @@ it("should be possible to hook multiple function per aspect",
 
 ----------------------------------------------------------------------------------
 
-it("should be possible have staggered aspect calls",
+TEST("should be possible have staggered aspect calls",
    function()
       M = nil
       One = nil
@@ -479,7 +479,7 @@ it("should be possible have staggered aspect calls",
 
 ----------------------------------------------------------------------------------
 
-it("Aspects should raise an error on unknown class.",
+TEST("Aspects should raise an error on unknown class.",
    function()
       M = 5
       One = nil
@@ -491,7 +491,7 @@ it("Aspects should raise an error on unknown class.",
 
 ----------------------------------------------------------------------------------
 
-it("should raise an error on wrong attribute.",
+TEST("should raise an error on wrong attribute.",
    function()
       M = nil
       One = nil
@@ -504,7 +504,7 @@ it("should raise an error on wrong attribute.",
 
 ----------------------------------------------------------------------------------
 
-it("shouldn't disturb super calls",
+TEST("shouldn't disturb super calls",
    function()
       M = nil
       N = nil
@@ -536,7 +536,7 @@ it("shouldn't disturb super calls",
    end)
 
 ----------------------------------------------------------------------------------
-it_u("should allow super/self calls while aspect counts",
+TEST("should allow super/self calls while aspect counts",
    function()
       M = nil N = nil O = nil
       Class{"M"}
@@ -596,7 +596,7 @@ it_u("should allow super/self calls while aspect counts",
 
 ----------------------------------------------------------------------------------
 
-it("an error should be thrown if an Aspect method gets called which is not declared",
+TEST("an error should be thrown if an Aspect method gets called which is not declared",
    function()
       M = nil
       One = nil
@@ -611,7 +611,7 @@ it("an error should be thrown if an Aspect method gets called which is not decla
 
 ----------------------------------------------------------------------------------
 
-it("If a before method returns false the original method should not be executed",
+TEST("If a before method returns false the original method should not be executed",
    function()
       M = nil
       One = nil

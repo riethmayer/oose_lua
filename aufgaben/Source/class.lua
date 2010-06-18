@@ -261,7 +261,6 @@ end
 ----------------------------------------------------------------------------------
 
 function n_class_methods.mt:__index(key)
- 
    local func_attr = self._aspects[key]
       or self._class_attributes[key]
       or self._super and self._super[key]
@@ -343,7 +342,6 @@ function n_aspect_array_methods:pattern_wrapper(klass, func, func_key)
    if self._in_wrapping:contains(func_key) then
       wrong_cyclic_aspect(klass, func_key, self._in_wrapping)
    end
-
    self._in_wrapping:add(func_key)
    for _, aspect in ipairs(self) do
       func = aspect:wrap_func(klass, func, func_key)

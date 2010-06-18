@@ -13,22 +13,21 @@ Class{'MyClass', SuperClass,
    }
 --]]
 
+require("sm_loader")
 require 'lspec'
--- TODO create LOS.lua and add the Class definition
--- require 'LOS'
-require("loader")
 
-LSpec:setup()
+
+LSpec:setup("Aufgabe 1 Tests")
 
 -------------------------------------------------------------------------------
-it("should add 'MyClass' to the global context",
+TEST("should add 'MyClass' to the global context",
    function()
       Class{'MyClass', attribute1 = String, attribute2 = MyClass }
       return _G['MyClass'] ~= nil
    end)
 
 -------------------------------------------------------------------------------
-it("instances should be of class",
+TEST("instances should be of class",
    function()
       MyClass = nil
       Class{'MyClass', attribute1 = String, attribute2 = MyClass }
@@ -37,21 +36,21 @@ it("instances should be of class",
    end)
 
 -------------------------------------------------------------------------------
-it("should be optional to pass a superclass",
+TEST("should be optional to pass a superclass",
    function()
       Class{'WithoutSuperclass'}
       return WithoutSuperclass._super == Object
    end)
 
 -------------------------------------------------------------------------------
-it("should be ok to have one attribute",
+TEST("should be ok to have one attribute",
    function()
       Class{'WithOneAttribute', attribute1 = String}
       local o = WithOneAttribute:new()
       return o.attribute1 == ""
    end)
 -------------------------------------------------------------------------------
-it("should be ok to have two attributes",
+TEST("should be ok to have two attributes",
    function()
       Class{'WithTwoAttributes',
             attribute1 = Boolean,
@@ -61,7 +60,7 @@ it("should be ok to have two attributes",
    end)
 
 -------------------------------------------------------------------------------
-it("should raise an error on wrong type assignement",
+TEST("should raise an error on wrong type assignement",
    function()
       WithTwoAttributes = nil
       Class{'WithTwoAttributes',
@@ -78,7 +77,7 @@ it("should raise an error on wrong type assignement",
    end)
 
 -------------------------------------------------------------------------------
-it("should add MagicClass to global context before attribute assignment",
+TEST("should add MagicClass to global context before attribute assignment",
    function()
       MagicClass = nil
       Class{'MagicClass', SelfClassRef = MagicClass }
@@ -88,7 +87,7 @@ it("should add MagicClass to global context before attribute assignment",
    end)
 
 -------------------------------------------------------------------------------
-it("should throw an error on undefined type attribute",
+TEST("should throw an error on undefined type attribute",
    function()
       MagicClass = nil
       code, err = pcall(Class, {'MagicClass', Undef = NotDefined })
@@ -96,7 +95,7 @@ it("should throw an error on undefined type attribute",
    end)
 
 -------------------------------------------------------------------------------
-it("should not be possible to override an attribute with different type",
+TEST("should not be possible to override an attribute with different type",
    function()
       Class{'FirstType'}
       Class{'SecondType'}
@@ -107,8 +106,10 @@ it("should not be possible to override an attribute with different type",
 
 -------------------------------------------------------------------------------
 
-it("should be possible to override an attribute with same type",
+TEST("should be possible to override an attribute with same type",
    function()
+      One = nil
+      Two = nil
       Class{'One', attr = Boolean}
       Class{'Two', One, attr = Boolean}
 
@@ -124,7 +125,7 @@ it("should be possible to override an attribute with same type",
 
 -------------------------------------------------------------------------------
 
-it("should be possible to override an attribute with same type",
+TEST("should be possible to override an attribute with same type",
    function()
       Class{'Existing'}
       Class{'SuperExisting', nil, with_existing = Existing}
@@ -140,7 +141,7 @@ it("should be possible to override an attribute with same type",
 
 -------------------------------------------------------------------------------
 
-it("should be possible to override an attribute with same type and add more",
+TEST("should be possible to override an attribute with same type and add more",
    function()
       Class{'AA'}
       Class{'BB'}
@@ -150,7 +151,7 @@ it("should be possible to override an attribute with same type and add more",
    end)
 
 -------------------------------------------------------------------------------
-it("should delegate methods to superclass",
+TEST("should delegate methods to superclass",
    function()
       Class{'Fahrzeug', marke = String, baujahr = Number}
       assert(Fahrzeug)
@@ -165,14 +166,14 @@ it("should delegate methods to superclass",
    end)
 
 -------------------------------------------------------------------------------
-it("should raise an error if an unsupported attribute type is used",
+TEST("should raise an error if an unsupported attribute type is used",
    function()
       local code = pcall(Class,{"FehlerKlasse", falschesAttribut = unbekannterTyp})
       return code == false
    end)
 
 -------------------------------------------------------------------------------
-it("should raise an error if a super class has a cylic dependency ",
+TEST("should raise an error if a super class has a cylic dependency ",
    function()
       Class{'A'}
       Class{'B', A}
@@ -181,7 +182,7 @@ it("should raise an error if a super class has a cylic dependency ",
    end)
 
 -------------------------------------------------------------------------------
-it("should accept convertible assignements",
+TEST("should accept convertible assignements",
    function()
       A = nil
       B = nil
@@ -195,7 +196,7 @@ it("should accept convertible assignements",
    end)
 
 -------------------------------------------------------------------------------
-it("should raise an error if a super class is not a LOS class",
+TEST("should raise an error if a super class is not a LOS class",
    function()
       local something = 4
       local code = pcall(Class, {'LOSClassWithInvalidSuperclass', something})
@@ -203,7 +204,7 @@ it("should raise an error if a super class is not a LOS class",
    end)
 
 -------------------------------------------------------------------------------
-it("should initialize a reference with nil",
+TEST("should initialize a reference with nil",
    function()
       Class{'AAA'}
       Class{'WithReferenceInitialized', ref = AAA}
@@ -212,7 +213,7 @@ it("should initialize a reference with nil",
    end)
 
 -------------------------------------------------------------------------------
-it("should give attributes a higher priority than methods",
+TEST("should give attributes a higher priority than methods",
    function()
       Class{'ClassWithMethod'}
       Class{'ClassWithAttribute', ClassWithMethod, action = String}
@@ -221,15 +222,15 @@ it("should give attributes a higher priority than methods",
       function ClassWithMethod:action()
          return "method"
       end
-      local action_is_string = type(cwa.action == "string")
+      local action_is_string = type(cwa.action) == "string"
       function ClassWithAttribute:action()
          return "another method"
       end
-      local attribute_has_priority = type(cwa.action == "string")
+      local attribute_has_priority = type(cwa.action) == "string"
       return action_is_string and attribute_has_priority
    end)
 ----------------------------------------------------------------------------------
-it("should be possible to delete the value of a class reference",
+TEST("should be possible to delete the value of a class reference",
    function()
       Class{'Refered', attr1 = Number}
       Class{'ClassWithRef', ref = Refered}

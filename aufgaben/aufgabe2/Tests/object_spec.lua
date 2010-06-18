@@ -1,4 +1,4 @@
-require("loader")
+require("sm_loader")
 
 Class{'A'}
 function A:print()

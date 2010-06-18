@@ -1,21 +1,21 @@
-require("loader")
+require("sm_loader")
 require 'lspec'
 
-LSpec:setup()
+LSpec:setup("BaseType Tests")
 ----------------------------------------------------------------------------------
-it("should have Object as superclass",
+TEST("should have Object as superclass",
    function()
       return Boolean._super == Object and Number._super == Object and 
          String._super == Object
    end)
 ----------------------------------------------------------------------------------
-it("should have classnames",
+TEST("should have classnames",
    function()
       return Boolean.classname == "Boolean" and Number.classname == "Number" and
          String.classname == "String"
    end)
 ----------------------------------------------------------------------------------
-it("should be instantiatable",
+TEST("should be instantiatable",
    function()
       local b = Boolean:new()
       local s = String:new()

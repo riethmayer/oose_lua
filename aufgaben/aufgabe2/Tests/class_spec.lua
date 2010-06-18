@@ -1,61 +1,64 @@
-require("loader")
+require("sm_loader")
 require 'lspec'
 
-LSpec:setup()
+LSpec:setup("Class Tests")
 ----------------------------------------------------------------------------------
 -- Testing Class#validate_classname
 ----------------------------------------------------------------------------------
-it("should not be possible to create a class called Object",
+TEST("should not be possible to create a class called Object",
    function()
       success = pcall(Class,{'Object'})
       return success == false
    end)
 ----------------------------------------------------------------------------------
-it("should not be possible to create a class called Class",
+TEST("should not be possible to create a class called Class",
    function()
       success = pcall(Class,{'Class'})
       return success == false
    end)
 ----------------------------------------------------------------------------------
-it("should not be possible to create a class called Instance",
+TEST("should not be possible to create a class called Instance",
    function()
       success = pcall(Class,{'Instance'})
       return success == false
    end)
 ----------------------------------------------------------------------------------
-it("should not be possible to create a class called Boolean",
+TEST("should not be possible to create a class called Boolean",
    function()
       success = pcall(Class,{'Boolean'})
       return success == false
    end)
 ----------------------------------------------------------------------------------
-it("should not be possible to create a class called String",
+TEST("should not be possible to create a class called String",
    function()
       success = pcall(Class,{'String'})
       return success == false
    end)
 ----------------------------------------------------------------------------------
-it("should not be possible to create a class called Number",
+TEST("should not be possible to create a class called Number",
    function()
       success = pcall(Class,{'Number'})
       return success == false
    end)
 ----------------------------------------------------------------------------------
-it("should add 'MyClass' to the global context",
+TEST("should add 'MyClass' to the global context",
    function()
+      MyClass = nil
       Class{'MyClass', attribute1 = String, attribute2 = MyClass }
       return _G['MyClass'] ~= nil
    end)
 ----------------------------------------------------------------------------------
-it("should be optional to pass a superclass",
+TEST("should be optional to pass a superclass",
    function()
+      WithoutSuperclass = nil
       Class{'WithoutSuperclass'}
       -- the topmost Object should be Object
       return WithoutSuperclass._super == Object
    end)
 ----------------------------------------------------------------------------------
-it("should be ok to have one attribute",
+TEST("should be ok to have one attribute",
    function()
+      WithOneAttribute = nil
       Class{'ObjectWithOneAttribute'}
       Class{'WithOneAttribute', attribute1 = ObjectWithOneAttribute}
       o = WithOneAttribute:new()
@@ -65,28 +68,29 @@ it("should be ok to have one attribute",
       return cond1 and cond2
    end)
 ----------------------------------------------------------------------------------
-it("should be ok to have two attributes",
+TEST("should be ok to have two attributes",
    function()
-       Class{'WithTwoAttributes', nil,
-                    attribute1 = Boolean,
-                    attribute2 = Boolean}
-       return WithTwoAttributes._class_attributes.attribute1 == Boolean and 
+      WithTwoAttributes = nil
+      Class{'WithTwoAttributes', nil,
+	    attribute1 = Boolean,
+	    attribute2 = Boolean}
+      return WithTwoAttributes._class_attributes.attribute1 == Boolean and 
          WithTwoAttributes._class_attributes.attribute2 == Boolean
    end)
 ----------------------------------------------------------------------------------
-it("should be possible to pass a Number as attribute",
+TEST("should be possible to pass a Number as attribute",
    function()
       Class{'WithNumberAttribute', nil, number = Number}
       return WithNumberAttribute._class_attributes.number == Number
    end)
 ----------------------------------------------------------------------------------
-it("should be possible to pass a Boolean as attribute",
+TEST("should be possible to pass a Boolean as attribute",
    function()
       Class{'WithBooleanAttribute', nil, boolean = Boolean}
       return WithBooleanAttribute._class_attributes.boolean == Boolean
    end)
 ----------------------------------------------------------------------------------
-it("should add MagicClass to global context before attribute assignment",
+TEST("should add MagicClass to global context before attribute assignment",
    function()
       MagicClass = nil
       Class{'MagicClass', automagic = MagicClass}
@@ -97,8 +101,11 @@ it("should add MagicClass to global context before attribute assignment",
       return cond1 and cond2
    end)
 ----------------------------------------------------------------------------------
-it("should not be possible to override an attribute with different type",
+TEST("should not be possible to override an attribute with different type",
    function()
+      FirstType = nil
+      SecondType = nil
+      Super = nil
       Class{'FirstType'}
       Class{'SecondType'}
       Class{'Super', nil, first = FirstType}
@@ -106,26 +113,38 @@ it("should not be possible to override an attribute with different type",
       return code == false
    end)
 ----------------------------------------------------------------------------------
-it("should be possible to override an attribute with same type",
+TEST("should be possible to override an attribute with same type",
    function()
+      Existing = nil
+      SuperExisting = nil
+      DuperExisting = nil
       Class{'Existing'}
       Class{'SuperExisting', with_existing = Existing}
-      local code = pcall(Class, 
-                         {'DuperExisting', SuperExisting, with_existing = Existing})
-      return code
+      Class{'DuperExisting', SuperExisting, with_existing = Existing}
+      CHECK_EQ(DuperExisting._classname, "DuperExisting", "Class not inst")
+      Existing = nil
+      SuperExisting = nil
+      DuperExisting = nil
    end)
 ----------------------------------------------------------------------------------
-it("should be possible to override an attribute with same type and add more",
+TEST("should be possible to override an attribute with same type and add more",
    function()
+      AA = nil
+      BB = nil
+      WithAA = nil
+      WithBB = nil
+      
       Class{'AA'}
       Class{'BB'}
       Class{'WithAA', first = AA}
-      local code = pcall(Class,{'WithBB', WithAA, first = AA, second = BB})
-      return code
+      Class{'WithBB', WithAA, first = AA, second = BB}
+   
    end)
 ----------------------------------------------------------------------------------
-it("should delegate methods to superclass",
+TEST("should delegate methods to superclass",
    function()
+      Fahrzeug = nil
+      Motorrad = nil
       Class{'Fahrzeug', marke = String, baujahr = Number}
       assert(Fahrzeug)
       function Fahrzeug:is_japanese(jahr)
@@ -135,53 +154,63 @@ it("should delegate methods to superclass",
       local ka = Motorrad:new()
       ka.marke = 'Kawasaki'
       ka.baujahr = 1999
+
+      Fahrzeug = nil
+      Motorrad = nil
       return ka:is_japanese() == true
    end)
 ----------------------------------------------------------------------------------
-it("should raise an error if an unsupported attribute type is used",
+TEST("should raise an error if an unsupported attribute type is used",
    function()
       local code = pcall(Class,{"FehlerKlasse", falschesAttribut = unbekannterTyp})
       return code == false
    end)
 ----------------------------------------------------------------------------------
-it("should raise an error if a super class has a cylic dependency ",
-   function()
+TEST("should raise an error if a super class has a cylic dependency ",
+   function()      
+      A = nil
+      B = nil
       Class{'A'}
       Class{'B', A}
       local call = pcall(Class,{'A', B})
+      A = nil
+      B = nil
       return call == false
    end)
 ----------------------------------------------------------------------------------
-it("should raise an error if a super class is not a LOS class",
+TEST("should raise an error if a super class is not a LOS class",
    function()
       local something = 4
       local code = pcall(Class, {'LOSClassWithInvalidSuperclass', something})
       return code == false
    end)
 ----------------------------------------------------------------------------------
-it("should define the basic string class",
+TEST("should define the basic string class",
    function()
       Class{"StringHolder", str = String}
       o = StringHolder:new()
       return o.str == ""
    end)
 ----------------------------------------------------------------------------------
-it("should define the basic boolean class",
+TEST("should define the basic boolean class",
    function()
       Class{"BoolHolder", bool = Boolean}
       o = BoolHolder:new()
       return o.bool == false
    end)
 ----------------------------------------------------------------------------------
-it("should define the basic number class",
+TEST("should define the basic number class",
    function()
       Class{"NumHolder", num = Number}
       o = NumHolder:new()
       return o.num == 0
    end)
 ----------------------------------------------------------------------------------
-it("should give attributes a higher priority than methods",
+TEST("should give attributes a higher priority than methods",
    function()
+      ClassWithMethod = nil
+      ClassWithAttribute = nil
+
       Class{'ClassWithMethod'}
       Class{'ClassWithAttribute', ClassWithMethod, action = String}
       local cwa = ClassWithAttribute:new()
@@ -189,16 +218,21 @@ it("should give attributes a higher priority than methods",
       function ClassWithMethod:action()
          return "method"
       end
-      local action_is_string = type(cwa.action == "string")
+      local action_is_string = type(cwa.action) == "string"
       function ClassWithAttribute:action()
          return "another method"
       end
-      local attribute_has_priority = type(cwa.action == "string")
+      local attribute_has_priority = type(cwa.action) == "string"
+
+      ClassWithMethod = nil
+      ClassWithAttribute = nil
+
       return action_is_string and attribute_has_priority
    end)
 ----------------------------------------------------------------------------------
-it("should allow super calls",
+TEST("should allow super calls",
    function()
+      M = nil N = nil O = nil
       Class{"M"}
       Class{"N", M}
       Class{"O", N}
@@ -222,6 +256,9 @@ it("should allow super calls",
       end
       inst = O:new()
       inst:call()
+
+      M = nil N = nil O = nil
+
       return m == true and n == true and o == true
    end)
 LSpec:teardown()

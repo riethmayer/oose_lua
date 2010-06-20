@@ -193,7 +193,6 @@ function n_wrapper.new(klass, before, middle, after)
    end
 
    local wrapped = Function:new(call_order)
-   wrapped._classname = "AspectWrapper"
    return wrapped
 end
 

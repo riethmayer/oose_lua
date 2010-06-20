@@ -4,7 +4,6 @@ bgGame = Backgammon:new()
 bgGame:start(false)			-- startet ein Backgammonspiel ohne Benutzerinteraktion, dabei wird das Spielfeld einmalig angezeigt
 MoveChecker:enable()		-- aktiviert den MoveChecker: Eingabesyntax und Spielzuege werden jetzt geprueft
 MoveLogger:enable()			-- aktiviert den MoveLogger: Der Spielverlauf wird geloggt
-print(bgGame._class._classname)
 bgGame:print()
 bgGame:setDice(3,5)			-- setzt die Würfelwerte auf 3 und 5
 bgGame:moveStone("24 21")	-- Ein schwarzer Stein wird erfolgreich von Point 24 auf Point 21 verschoben

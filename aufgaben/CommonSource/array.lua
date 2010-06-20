@@ -112,7 +112,7 @@ end
 ----------------------------------------------------------------------------------
 
 function Array:_remove(idx)
-   table.remove(self._array_data, idx)
+   return table.remove(self._array_data, idx)
 end
 
 ----------------------------------------------------------------------------------

@@ -29,14 +29,14 @@ end
 
 --================================================================================
 
-Class{"Pattern", mPat = String, mFunc = Function, mGetArgs = Function}
+Class{"Pattern", mPat = String, mFuncName = String, mGetArgs = Function}
 
 ----------------------------------------------------------------------------------
 
 function Pattern:new(rPat, rFunc, rGetArgsFunc)
    local New = Pattern._super.new(self)
    New.mPat = rPat
-   New.mFunc = rFunc
+   New.mFuncName = rFunc   
    if rGetArgsFunc then
       New.mGetArgs = rGetArgsFunc
    end
@@ -60,14 +60,13 @@ Class{"Parser", FrontEnd, mParsing = Boolean, mPatterns = Array}
 
 function Parser:new(Disp)
    New = Parser._super.new(self, Disp)
-   New:Init()
+   New:Init(Disp)
    return New
 end
 
 ----------------------------------------------------------------------------------
 
 function Parser:Init()
-   self.mDisp = Disp
    self.mParsing = false
    self.mPatterns = Parser.InitPatterns()
 end
@@ -76,12 +75,12 @@ end
 
 function Parser.InitPatterns()
    local patterns = Array:new(Pattern)
-   patterns:push_back(Pattern:new(MoveArgRegEx, Dispatcher.MoveStone, StringToNumberForMove))
-   patterns:push_back(Pattern:new("restart", Dispatcher.RestartGame))
-   patterns:push_back(Pattern:new("end", Dispatcher.EndGame))
-   patterns:push_back(Pattern:new("next", Dispatcher.NextPlayer))
-   patterns:push_back(Pattern:new("check", Dispatcher.ToggleCheck))
-   patterns:push_back(Pattern:new("log", Dispatcher.ToggleLog))
+   patterns:push_back(Pattern:new(MoveArgRegEx, "MoveStone", StringToNumberForMove))
+   patterns:push_back(Pattern:new("restart", "RestartGame"))
+   patterns:push_back(Pattern:new("end", "EndGame"))
+   patterns:push_back(Pattern:new("next", "NextPlayer"))
+   patterns:push_back(Pattern:new("check", "ToggleCheck"))
+   patterns:push_back(Pattern:new("log", "ToggleLog"))
    return patterns
 end
 
@@ -119,10 +118,10 @@ end
 ----------------------------------------------------------------------------------
 
 function Parser:Excecute(input, pattern)
-   local l_Func = pattern.mFunc
+   local l_FuncName = pattern.mFuncName
    local l_Match = input:match(pattern.mPat)
-   local l_Args = {pattern:GetArgs(l_Match)}
-   l_Func(unpack(l_Args))
+   local l_Args = { pattern.mGetArgs(l_Match) }
+   self.mDisp[l_FuncName](self.mDisp, unpack(l_Args))
 end
 
 --================================================================================
@@ -134,9 +133,9 @@ Aspect{"ParserCheck",
 ----------------------------------------------------------------------------------
 
 function ParserCheck:MisMatch(str, pattern)
-   print("Syntax", str)
-   if str:match(pattern) ~= str then
-      error("Syntax error, expected "..pattern.." got "..str)
+   print("Syntax", str, pattern.mPat)
+   if str:match(pattern.mPat) ~= str then
+      error("Syntax error, expected "..pattern.mPat.." got "..str)
    end
 end
 

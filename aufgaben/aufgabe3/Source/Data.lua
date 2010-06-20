@@ -77,7 +77,7 @@ Class{"OutField", Field}
 function OutField:get_stone(color)
    for i = self.mStones:size(), 1, -1 do
       if self.mStones:at(i):Color() == color then
-	 return table.remove(self.mStones, i)
+	 return self.mStones:_remove(i)
       end
    end
 end

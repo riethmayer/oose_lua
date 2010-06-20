@@ -49,8 +49,7 @@ function class_hook(global_table, key)
    if key == "Class" then
       recording_global_forward_decls = true
       return class_impl
-   end
-   if recording_global_forward_decls then
+   elseif recording_global_forward_decls then
       return key
    end
 end
@@ -239,13 +238,13 @@ n_class_methods.mt = {}
 ----------------------------------------------------------------------------------
 
 function n_class_methods:_enable_aspect(aspect) 
-   self._aspects:append(aspect)
+   self._aspects:_append_asp(aspect)
 end
 
 ----------------------------------------------------------------------------------
 
 function n_class_methods:_disable_aspect(aspect)
-   self._aspects:remove(aspect)
+   self._aspects:_remove_asp(aspect)
 end
 
 ----------------------------------------------------------------------------------
@@ -296,7 +295,7 @@ end
 
 ----------------------------------------------------------------------------------
 
-function  n_aspect_array_methods:append(aspect)
+function  n_aspect_array_methods:_append_asp(aspect)
    local pos = self:find_aspect_pos(aspect)
    assert(pos == nil)
    table.insert(self, aspect)
@@ -304,7 +303,7 @@ end
 
 ----------------------------------------------------------------------------------
 
-function  n_aspect_array_methods:remove(aspect)
+function  n_aspect_array_methods:_remove_asp(aspect)
    local pos = self:find_aspect_pos(aspect)
    assert(pos ~= nil)
    table.remove(self, pos)
@@ -344,7 +343,7 @@ function n_aspect_array_methods:pattern_wrapper(klass, func, func_key)
    for _, aspect in ipairs(self) do
       func = aspect:wrap_func(klass, func, func_key)
    end
-   self._in_wrapping:remove(func_key)
+   self._in_wrapping:_remove_asp(func_key)
    return func
 end
 
@@ -358,7 +357,7 @@ end
 ----------------------------------------------------------------------------------
 
 function n_aspect_array_methods.mt:__newindex(key, value)
-   error("Don't insert aspects directly, but call append")
+   error("Don't insert aspects directly, but call _append_asp")
 end
 
 ----------------------------------------------------------------------------------
@@ -370,7 +369,7 @@ end
 
 ----------------------------------------------------------------------------------
 
-function n_string_array_methods:remove(string)
+function n_string_array_methods:_remove_asp(string)
    local index = self:pos(string)
    assert(index)
    table.remove(self, index)

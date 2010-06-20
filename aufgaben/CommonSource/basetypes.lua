@@ -60,18 +60,22 @@ function Function:redeclarable_with(func)
    return false
 end
 function Function:can_accept(value)
-   return false
+   return type(value) == "function" 
+     or (type(value) == "table" 
+         and value._classname == "Function")
+end
+function Function:_default_value()
+   -- NOOP
+   return function() end
 end
 function Function:new(func_def)
    local definition = func_def
    local func = {}
+   func._default_value = function() return definition end
    setmetatable(func, {__index = self, __call = 
 		       function(t, ...)
 			  return definition(...)
 		       end})
-   function func._default_value()
-      return definition
-   end
    return func
 end
 

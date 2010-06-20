@@ -46,6 +46,12 @@ setmetatable(Object,class_method_lookup)
 
 ----------------------------------------------------------------------------------
 
+local function before_call(inst)
+   set_current_super_self(inst)
+end
+
+----------------------------------------------------------------------------------
+
 function Object:get(key)
    before_call(self)
    local found_decl = self._class[key]
@@ -67,12 +73,6 @@ function Object:set(key, value)
    else
       wrong_value_assignement(key, found_decl, value)
    end
-end
-
-----------------------------------------------------------------------------------
-
-function before_call(inst)
-   set_current_super_self(inst)
 end
 
 ----------------------------------------------------------------------------------

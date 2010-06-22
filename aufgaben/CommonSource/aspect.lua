@@ -198,11 +198,12 @@ function n_wrapper.new(klass, before, middle, after)
 	 end
       end
       assert(wd.middle ~= nil)
-      wd.middle(...)
+      local l_ret = wd.middle(...)
       while wd.after[1] ~= nil do
 	 local func = front(wd.after)
 	 func(append_var({...}, func.mName))
       end
+      return l_ret
    end
 
    local wrapped = Function:new(call_order)

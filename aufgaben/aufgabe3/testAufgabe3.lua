@@ -1,4 +1,5 @@
-require("Source.Backgammon")
+require("sm_loader")
+root_require("aufgabe3.Source.Backgammon")
 
 bgGame = Backgammon:new()
 bgGame:start(false)			-- startet ein Backgammonspiel ohne Benutzerinteraktion, dabei wird das Spielfeld einmalig angezeigt

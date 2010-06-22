@@ -60,7 +60,7 @@ end
 
 local function FuncMap()
    local patterns = Array:new(Pattern)
-   patterns:push_back(Pattern:new(MoveArgRegEx, "MoveStone", StringToNumberForMove))
+   patterns:push_back(Pattern:new(MoveArgRegEx, "MoveStoneUpdateView", StringToNumberForMove))
    patterns:push_back(Pattern:new("restart", "RestartGame"))
    patterns:push_back(Pattern:new("end", "EndGame"))
    patterns:push_back(Pattern:new("next", "NextPlayer"))

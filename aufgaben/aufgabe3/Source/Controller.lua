@@ -37,8 +37,7 @@ function Controller:MoveStone(from, to)
    if self:RemoveDice(self:DrawDistance(l_from, to)) == 0 then
       self:TogglePlayer()
    end
-   print("Moved"..l_from..to)
-   self:UpdateView()
+   return true
 end
 
 ----------------------------------------------------------------------------------
@@ -158,7 +157,6 @@ Aspect{"RuleCheck",
 ----------------------------------------------------------------------------------
 
 function RuleCheck:Check(from, to)
-   print("Check", from, to)
    local l_from = self:AdjustedFrom(from)
    local l_Error =
       self:RightDrawDirection(l_from, to)

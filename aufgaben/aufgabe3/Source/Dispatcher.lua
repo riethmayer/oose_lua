@@ -31,8 +31,17 @@ end
 
 ----------------------------------------------------------------------------------
 
+function Dispatcher:MoveStoneUpdateView(from, to)
+   local l_res = self:MoveStone(from, to)
+   if l_res then
+      self:UpdateView()
+   end
+end
+
+----------------------------------------------------------------------------------
+
 function Dispatcher:MoveStone(from, to)
-   self.mController:MoveStone(from, to)
+   return self.mController:MoveStone(from, to)
 end
 
 ----------------------------------------------------------------------------------

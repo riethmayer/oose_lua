@@ -1,5 +1,5 @@
 require("sm_loader")
-require("Source.Dispatcher")
+root_require("aufgabe3.Source.Dispatcher")
 
 --================================================================================
 

@@ -53,8 +53,9 @@ function Stack:iterator(start_idx, stride)
    return 
    function()
       local val = l_stack._array_data[l_idx]
+      local val_idx = l_idx
       l_idx = l_idx + l_stride
-      return val
+      return val, val_idx
    end
 end
 
@@ -117,11 +118,24 @@ end
 
 ----------------------------------------------------------------------------------
 
-function Array:remove_val(val, all)
-   for i = 1, self:size() do
-      if self:at(i) == val then
-	 self:_remove(i)
-	 if not all then break end
+function Array:val_iterator(l_val)
+   local l_iter = self:fwd_iterator()
+
+   return 
+   function()
+      for val, idx in l_iter do
+	 if val == l_val then
+	    return idx
+	 end
       end
    end
+end
+	     
+----------------------------------------------------------------------------------
+
+function Array:remove_val(val, all)
+   for i in self:val_iterator(val) do
+      self:_remove(i)
+      if not all then break end	
+   end 
 end

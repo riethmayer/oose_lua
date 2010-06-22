@@ -35,6 +35,7 @@ function set_index()
    local mt = {}
    mt.__index = 
       function(_, key)
+	 assert(_ == super)
 	 super_level = super_level + 1
 	 return the_real_trap_maker(key)
       end

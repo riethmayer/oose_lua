@@ -1,5 +1,5 @@
 require("sm_loader")
-require("Source.Controller")
+root_require("aufgabe3.Source.Controller")
 
 --================================================================================
 
@@ -67,7 +67,7 @@ end
 
 --================================================================================
 
-Class{"File", mFileName = String}
+Class{"File", mFileName = String, mOpen = Boolean}
 
 ----------------------------------------------------------------------------------
 
@@ -132,7 +132,7 @@ end
 
 --================================================================================
 
-Class{"MoveLogger", mEnabled = Boolean}
+Class{"MoveLogger"}
 
 ----------------------------------------------------------------------------------
 
@@ -140,16 +140,6 @@ function MoveLogger:new(FileName)
    local New = MoveLogger._super.new(self)
    New.mEnabled = false
    return New
-end
-
-----------------------------------------------------------------------------------
-
-function MoveLogger:   local l_var = {...})
-   if self.mEnabled then
-      self:disable()
-   else
-      self:enable()
-   end
 end
 
 ----------------------------------------------------------------------------------

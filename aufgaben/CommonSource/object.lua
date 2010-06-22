@@ -55,6 +55,9 @@ end
 function Object:get(key)
    before_call(self)
    local found_decl = self._class[key]
+   if key == "BeginParsing" then
+      print("obj", found_decl.mName)
+   end
    if found_decl then
       local value = self._attribute_values[key]
       local default = found_decl._default_value()

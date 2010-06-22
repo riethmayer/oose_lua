@@ -1,5 +1,5 @@
 require("sm_loader")
-require("Source.Dispatcher")
+root_require("aufgabe3.Source.Dispatcher")
 
 --================================================================================
 local MoveArgRegEx = "%d%d?%s%d%d?"
@@ -54,6 +54,20 @@ end
 
 ----------------------------------------------------------------------------------
 
+local function FuncMap()
+   local patterns = Array:new(Pattern)
+   patterns:push_back(Pattern:new(MoveArgRegEx, "MoveStone", StringToNumberForMove))
+   patterns:push_back(Pattern:new("restart", "RestartGame"))
+   patterns:push_back(Pattern:new("end", "EndGame"))
+   patterns:push_back(Pattern:new("next", "NextPlayer"))
+   patterns:push_back(Pattern:new("check", "ToggleCheck"))
+   patterns:push_back(Pattern:new("log", "ToggleLog"))
+   return patterns
+end
+
+
+----------------------------------------------------------------------------------
+
 Class{"Parser", FrontEnd, mParsing = Boolean, mPatterns = Array}
 
 ----------------------------------------------------------------------------------
@@ -68,45 +82,34 @@ end
 
 function Parser:Init()
    self.mParsing = false
-   self.mPatterns = Parser.InitPatterns()
-end
-
-----------------------------------------------------------------------------------
-
-function Parser.InitPatterns()
-   local patterns = Array:new(Pattern)
-   patterns:push_back(Pattern:new(MoveArgRegEx, "MoveStone", StringToNumberForMove))
-   patterns:push_back(Pattern:new("restart", "RestartGame"))
-   patterns:push_back(Pattern:new("end", "EndGame"))
-   patterns:push_back(Pattern:new("next", "NextPlayer"))
-   patterns:push_back(Pattern:new("check", "ToggleCheck"))
-   patterns:push_back(Pattern:new("log", "ToggleLog"))
-   return patterns
+   self.mPatterns = FuncMap()
 end
 
 ----------------------------------------------------------------------------------
 
 function Parser:BeginParsing()
    self.mParsing = true
-   local input = io.stdin:read()
+   local input = self.GetLine()
    while input do
       self:TranslateInput(input)
-      input = io.stdin:read()
+      input = self.GetLine()
    end
 end
 
 ----------------------------------------------------------------------------------
 
+function Parser.GetLine()
+   return io.stdin:read()
+end
+
+----------------------------------------------------------------------------------
+
 function Parser:TranslateInput(input)
-   local l_PattIter = self.mPatterns:fwd_iterator()
-   local l_Pattern = l_PattIter()
-   while l_Pattern  do
-      local l_Match = self:FindPattern(input, l_Pattern.mPat)
-      if l_Match then
-	 self:Excecute(input, l_Pattern)
+   for patt in self.mPatterns:fwd_iterator() do
+      if self:FindPattern(input, patt.mPat) then
+	 self:Excecute(input, patt)
       end
-      l_Pattern = l_PattIter()
-   end   
+   end
 end
 
 ----------------------------------------------------------------------------------
@@ -133,7 +136,6 @@ Aspect{"ParserCheck",
 ----------------------------------------------------------------------------------
 
 function ParserCheck:MisMatch(str, pattern)
-   print("Syntax", str, pattern.mPat)
    if str:match(pattern.mPat) ~= str then
       error("Syntax error, expected "..pattern.mPat.." got "..str)
    end
@@ -168,53 +170,39 @@ end
 
 Aspect{"CommanderCheck",
        adapts = { Commander },
-       before = { MoveArgs = "moveStone",
-		  DiceArgs = "setDice",
-		  PrintArgs = "print"}}
+       before = { _CheckArgs = "[^_].*"}}
 
 ----------------------------------------------------------------------------------
 
-function CommanderCheck:MoveArgs(...)
+function CommanderCheck:_CheckArgs(...)
    local l_args = {...}
-   local l_str = l_args[1]
-
-   local l_confirmed =
-      #l_args == 1
-      and type(l_str) == "string"
-      and l_str:match(MoveArgRegEx) == l_str
-
-   if not l_confirmed then
-      print("Syntax error on command moveStone expected e.g.(\"12 25\") got (\""..unpack(l_args).."\")")
-      return false
+   local l_FuncName = table.remove(l_args)
+   local l_ArgTypes = {}
+   for _, v in pairs(l_args) do
+      table.insert(l_ArgTypes, type(v))
    end
-end
-
-----------------------------------------------------------------------------------
-
-function CommanderCheck:DiceArgs(...)
-   local l_args = {...}
-   local l_first, l_sec = l_args[1], l_args[2]
-
-   local l_confirmed =
-      #l_args == 2
-      and type(l_first) == "number"
-      and type(l_sec) == "number"
-
-   if not l_confirmed then
-      error("Syntax error on command setDice expected e.g.(1, 5) got "..unpack(l_args))
-   end   
-end
-
-----------------------------------------------------------------------------------
-
-function CommanderCheck:PrintArgs(...)
-   local l_args = {...}
-
-   local l_confirmed =
-      #l_args == 0
+   
+   local l_confirmed = ""
+   local l_expected = ""
+   if l_FuncName == "print" then
+      l_confirmed = #l_ArgTypes == 0
+      l_expected = "print()"      
+   elseif l_FuncName == "setDice" then
+      l_confirmed = #l_ArgTypes == 2
+         and l_ArgTypes[1] == "number"
+         and l_ArgTypes[2] == "number"
+      l_expected = "setDice(12, 5)"
+   elseif l_FuncName == "moveStone" then
+      l_confirmed = #l_ArgTypes == 1
+	 and l_ArgTypes[1] == "string"
+         and l_args[1]:match(MoveArgRegEx) == l_args[1]
+      l_expected = "moveStone(\"14 18\")"
+   end
 
    if not l_confirmed then
-      error("Syntax error on command print expected no arguments got "..unpack(l_args))
+      print("Syntax error on command "..l_FuncName.."(\""..unpack(l_args).."\") expected "
+	 ..l_expected..".")
+      return false
    end
 end
 

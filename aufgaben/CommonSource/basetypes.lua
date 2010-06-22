@@ -68,9 +68,10 @@ function Function:_default_value()
    -- NOOP
    return function() end
 end
-function Function:new(func_def)
+function Function:new(func_def, Name)
    local definition = func_def
    local func = {}
+   func.mName = Name
    func._default_value = function() return definition end
    setmetatable(func, {__index = self, __call = 
 		       function(t, ...)

@@ -49,13 +49,23 @@ end
 
 ----------------------------------------------------------------------------------
 
-function Field:get_stone()
+function Field:stone(color)
+   for stone, idx in self:stone_iterator() do
+      if stone:Color() == color then
+	 return stone, idx
+      end
+   end
+end
+
+----------------------------------------------------------------------------------
+
+function Field:take_stone()
    return self.mStones:pop()
 end
 
 ----------------------------------------------------------------------------------
 
-function Field:set_stone(l_Stone)
+function Field:place_stone(l_Stone)
    self.mStones:push(l_Stone)
 end
 
@@ -74,11 +84,11 @@ Class{"OutField", Field}
 
 ----------------------------------------------------------------------------------
 
-function OutField:get_stone(color)
-   for i = self.mStones:size(), 1, -1 do
-      if self.mStones:at(i):Color() == color then
-	 return self.mStones:_remove(i)
-      end
+function OutField:take_stone(color)
+   local l_Stone, l_idx = self:stone(color)
+   if l_Stone then 
+      self.mStones:_remove(l_idx)
+      return l_Stone
    end
 end
 
@@ -114,6 +124,13 @@ end
 function Dices:Remove(val)
    self.mDices:remove_val(val)
    return self.mDices:size()
+end
+
+----------------------------------------------------------------------------------
+
+function Dices:HasVal(val)
+   local l_Ret = self.mDices:val_iterator(val)() ~= nil
+   return l_Ret
 end
       
 --================================================================================
@@ -154,7 +171,7 @@ end
 function Data:Place(where, count, color)
    local l_Field = self.mFields:at(where)
    for i = 1, count do
-      l_Field:set_stone(Stone:new(color))
+      l_Field:place_stone(Stone:new(color))
    end
 end
       

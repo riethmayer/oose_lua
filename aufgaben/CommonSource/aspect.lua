@@ -5,7 +5,6 @@ Martin Nowak 302066
 ]]--
 
 --================================================================================
-
 ----------------------------------------------------------------------------------
 n_aspect = {}
 setmetatable(n_aspect, {__index = n_class_aspect})
@@ -166,8 +165,22 @@ end
 
 
 ----------------------------------------------------------------------------------
+Class{"NamedFunc", mFunc = Function, mName = String}
+----------------------------------------------------------------------------------
+function NamedFunc:new(Func, FuncName)
+   local New = NamedFunc._super.new(self)
+   New.mFunc = Func
+   New.mName = FuncName
+   return New
+end
+----------------------------------------------------------------------------------
 n_wrapper = {}
 ----------------------------------------------------------------------------------
+
+local function append_var(ta, elem)
+   table.insert(ta, elem)
+   return unpack(ta)
+end
 
 function n_wrapper.new(klass, before, middle, after)
    local wd = {}
@@ -178,7 +191,7 @@ function n_wrapper.new(klass, before, middle, after)
    function call_order(...)
       while wd.before[1] ~= nil do
 	 local func = front(wd.before)
-	 local ret = func(...)
+	 local ret = func(append_var({...}, func.mName))
 	 assert(ret == nil or type(ret) == "boolean")
 	 if ret == false then
 	    return
@@ -188,7 +201,7 @@ function n_wrapper.new(klass, before, middle, after)
       wd.middle(...)
       while wd.after[1] ~= nil do
 	 local func = front(wd.after)
-	 func(...)
+	 func(append_var({...}, func.mName))
       end
    end
 
@@ -198,10 +211,11 @@ end
 
 ----------------------------------------------------------------------------------
 
-function n_wrapper.build_functions(klass, func_names)
+function n_wrapper.build_functions(klass, func_names, key)
    local funcs = {}
    for i, v in ipairs(func_names) do
-      funcs[i] = klass[v]
+      local l_func = klass[v]
+      funcs[i] = Function:new(l_func._default_value(), key)
    end
    return funcs
 end
@@ -211,9 +225,10 @@ end
 function n_aspect_methods:wrap_func(klass, func, key)
    local match_bef = self._before_pattern:build_rev(key)
    local match_aft = self._after_pattern:build_fow(key)
+
    if match_bef[1] ~= nil or match_aft[1] ~= nil then
-      local bef_funcs = n_wrapper.build_functions(klass, match_bef)
-      local aft_funcs = n_wrapper.build_functions(klass, match_aft)
+      local bef_funcs = n_wrapper.build_functions(klass, match_bef, key)
+      local aft_funcs = n_wrapper.build_functions(klass, match_aft, key)
       return n_wrapper.new(klass, bef_funcs, func, aft_funcs)
    else
       return func

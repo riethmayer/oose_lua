@@ -1,9 +1,9 @@
 require("sm_loader")
-require("Source.Controller")
-require("Source.Dispatcher")
-require("Source.FrontEnd")
-require("Source.Data")
-require("Source.View")
+root_require("aufgabe3.Source.Controller")
+root_require("aufgabe3.Source.Dispatcher")
+root_require("aufgabe3.Source.FrontEnd")
+root_require("aufgabe3.Source.Data")
+root_require("aufgabe3.Source.View")
 
 --================================================================================
 

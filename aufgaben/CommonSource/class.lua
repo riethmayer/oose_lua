@@ -256,7 +256,6 @@ end
 ----------------------------------------------------------------------------------
 
 function n_class_methods.mt:__index(key)
- 
    local func_attr = self._aspects[key]
       or self._class_attributes[key]
       or self._super and self._super[key]
@@ -276,7 +275,7 @@ function n_class_methods.mt:__newindex(key, value)
    if type(value) ~= "function" then
       error("You can only define functions")
    end
-   self._class_attributes[key] = Function:new(value)
+   self._class_attributes[key] = Function:new(value, key)
 end
 
 ----------------------------------------------------------------------------------

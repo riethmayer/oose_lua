@@ -7,7 +7,7 @@ Class{"Command", mCmdName = String}
 
 ----------------------------------------------------------------------------------
 
-Class{"Dispatcher", mController = Controller}
+Class{"Dispatcher", mController = Controller, mEndParse = Function}
 
 ----------------------------------------------------------------------------------
 
@@ -15,6 +15,12 @@ function Dispatcher:new(rController)
    New = Dispatcher._super.new(self)
    New.mController = rController
    return New
+end
+
+----------------------------------------------------------------------------------
+
+function Dispatcher:SetEndParseCallback(cb)
+   self.mEndParse = cb
 end
 
 ----------------------------------------------------------------------------------
@@ -31,32 +37,42 @@ end
 
 ----------------------------------------------------------------------------------
 
+function Dispatcher:InitGame()   
+   self.mController:InitGame()
+   self:UpdateView()
+end
+
+----------------------------------------------------------------------------------
+
 function Dispatcher:RestartGame()
---   self.mController:Restart()
+  self.mController:InitGame()
+  self:UpdateView()
 end
 
 ----------------------------------------------------------------------------------
 
 function Dispatcher:EndGame()
---   self.mController:move(from, to)
+   self.mEndParse()
+   self.mController:Finish()
 end
 
 ----------------------------------------------------------------------------------
 
 function Dispatcher:NextPlayer()
---   self.mController:move(from, to)
+   self.mController:TogglePlayer()
+   self:UpdateView()
 end
 
 ----------------------------------------------------------------------------------
 
 function Dispatcher:ToggleCheck()
---   self.mController:move(from, to)
+   MoveChecker:Toggle()
 end
 
 ----------------------------------------------------------------------------------
 
 function Dispatcher:ToggleLog()
-   MoveLogger:ToggleEnabled(from, to)
+   MoveLogger:Toggle()
 end
 
 ----------------------------------------------------------------------------------
@@ -124,28 +140,36 @@ local l_File = File:new("BgLog.txt")
 
 Aspect{"DispatchLogger",
        adapts = { Dispatcher },
-       before = { LogMove = "MoveStone", LogRestart = "RestartGame"}}
+       before = { _LogMove = "MoveStone", _LogGame = "[^_][%a]*Game"}}
 
-function DispatchLogger:LogMove(from, to)
-   l_File:write("Moved stone from "..from.." to "..to.."\n")
+function DispatchLogger:_LogMove(from, to)
+   l_File:write(self:CurrentPlayer()..
+	     " moved stone from "..from.." to "..to..
+	     " at time: "..self:Time().."\n")
+end
+
+function DispatchLogger:_LogGame(CmdName)
+   l_File:write(CmdName.." at time: "..self:Time().."\n")
+end
+
+function DispatchLogger:CurrentPlayer()
+   return self.mController:CurrentPlayer()
+end
+
+function DispatchLogger:Time()
+   return self.mController:TimeDiff()
 end
 
 --================================================================================
 
 Class{"MoveLogger"}
-
 ----------------------------------------------------------------------------------
-
-function MoveLogger:new(FileName)
-   local New = MoveLogger._super.new(self)
-   New.mEnabled = false
-   return New
-end
-
+local l_Enabled = false
 ----------------------------------------------------------------------------------
 
 function MoveLogger:enable()
    l_File:open()
+   l_Enabled = true
    DispatchLogger:enable()
 end
 
@@ -153,5 +177,16 @@ end
 
 function MoveLogger:disable()
    l_File:close()
+   l_Enabled = false
    DispatchLogger:disable()
+end
+
+----------------------------------------------------------------------------------
+
+function MoveLogger:Toggle()
+   if l_Enabled then
+      self:disable()
+   else
+      self:enable()
+   end
 end

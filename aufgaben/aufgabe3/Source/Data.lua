@@ -39,6 +39,12 @@ end
 
 ----------------------------------------------------------------------------------
 
+function Field:Clear()
+   self.mStones:clear()
+end
+
+----------------------------------------------------------------------------------
+
 function Field:stone_iterator(UpOrDown)
    if UpOrDown then
       return self.mStones:iterator(1, 1)
@@ -135,7 +141,12 @@ end
       
 --================================================================================
 
-Class{"Data", mFields = Array, mOutField = OutField, mCurrentPlayer = String, mDices = Dices}
+Class{"Data", 
+      mFields = Array,
+      mOutField = OutField,
+      mCurrentPlayer = String,
+      mDices = Dices,
+      mTime = Number}
 
 ----------------------------------------------------------------------------------
 
@@ -154,6 +165,7 @@ end
 ----------------------------------------------------------------------------------
 -- par example
 function Data:Init()
+   self:Reset()
    local l_w = "white"
    local l_b = "black"
    self:Place(1, 2, l_w)
@@ -164,6 +176,21 @@ function Data:Init()
    self:Place(17, 3, l_w)
    self:Place(19, 5, l_w)
    self:Place(24, 2, l_b)
+   self.mDices:Randomize()
+   self.mCurrentPlayer = "black"
+   self.mTime = os.time()
+end
+
+----------------------------------------------------------------------------------
+
+function Data:Reset()
+   for field in self:field_iterator() do
+      field:Clear()
+   end
+   self.mOutField:Clear()
+   self.mCurrentPlayer = ""
+   self.mTime = 0
+   self.mDices.mDices:clear()
 end
 
 ----------------------------------------------------------------------------------
@@ -179,5 +206,11 @@ end
 
 function Data:field_iterator()
    return self.mFields:fwd_iterator()
+end
+
+----------------------------------------------------------------------------------
+
+function Data:TimeDiff()
+   return os.difftime(os.time(), self.mTime)
 end
 

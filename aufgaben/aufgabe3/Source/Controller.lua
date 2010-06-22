@@ -19,6 +19,18 @@ end
 
 ----------------------------------------------------------------------------------
 
+function Controller:InitGame()
+   self.mData:Init()
+end
+
+----------------------------------------------------------------------------------
+
+function Controller:Finish()
+   self.mData:Reset()
+end
+
+----------------------------------------------------------------------------------
+
 function Controller:MoveStone(from, to)
    local l_from = self:AdjustedFrom(from)
    self:DoMoveStone(l_from, to)
@@ -129,6 +141,11 @@ function Controller:UpdateView()
    self.mView:plot()
 end
 
+----------------------------------------------------------------------------------
+
+function Controller:TimeDiff()
+   return self.mData:TimeDiff()
+end
 
 --================================================================================
 
@@ -147,9 +164,11 @@ function RuleCheck:Check(from, to)
       self:RightDrawDirection(l_from, to)
    or self:NoOutstandingBrokenStones(l_from)
    or self:PlayerMayDraw(l_from)
-   or self:PlayerHasDice(self:DrawDistance(l_from, to))
+   or not self:IsFinishField(to)
+      and self:PlayerHasDice(self:DrawDistance(l_from, to))
    or self:TargetIsFree(to)
    or self:NoOutstandingDuties(to)
+
    if l_Error then
       print(l_Error)
       return false
@@ -160,7 +179,7 @@ end
 
 function RuleCheck:RightDrawDirection(from, to)
    if (to - from) * self:DrawDirection() < 0 then
-      return("Draws into wrong dircetion.")
+      return("Draws into wrong direction.")
    end
 end
 
@@ -217,9 +236,6 @@ end
 
 ----------------------------------------------------------------------------------
 
-
-----------------------------------------------------------------------------------
-
 function RuleCheck:TargetIsFree(to)
    local l_Field = self.mData.mFields:at(to)
    local l_Stone = l_Field and l_Field.mStones:top()
@@ -245,7 +261,7 @@ end
 
 function RuleCheck:AllInHomeZone()
    local l_Color = self:CurrentPlayer()
-   local l_Zone = self:PlayersHomeZone()
+   local l_Zone = self:PlayersRestZone()
    for i in l_Zone:iterator() do
       if self.mData.mFields:at(i):stone(l_Color) then
 	 return false
@@ -261,6 +277,16 @@ function RuleCheck:PlayersHomeZone()
       return ValueRange:new(1, 6)
    else
       return ValueRange:new(19, 24)
+   end
+end
+
+----------------------------------------------------------------------------------
+
+function RuleCheck:PlayersRestZone()
+   if self:CurrentPlayer() == "black" then
+      return ValueRange:new(7, 24)
+   else
+      return ValueRange:new(1, 19)
    end
 end
 

@@ -40,6 +40,29 @@ local function LowerIndices()
    end
    return table.concat(l_lower, " ")
 end
+----------------------------------------------------------------------------------
+
+local function Invert(t)
+   local l_inv = {}
+   for i, line in pairs(t) do
+      local l_ins = #t + 1 - i
+      table.insert(l_inv, l_ins, line)
+   end
+   return l_inv
+end
+
+----------------------------------------------------------------------------------
+
+local function Join(...)
+   local l_joint = {}
+   local l_args = {...}
+   for _, v in pairs(l_args) do
+      for _, line in pairs(v) do
+	 table.insert(l_joint, line)
+      end
+   end
+   return l_joint
+end
       
 --================================================================================
 
@@ -55,76 +78,92 @@ end
 
 ----------------------------------------------------------------------------------
 
-function View:StoneIters()
+function View:StoneIters(left, right)
+   local l_low = left < right and left or right
+   local l_high = left < right and right or left
    local l_Iters = {}
-   local l_FieldIter = self.mData:field_iterator()
    local KBottomUp = true
-   for i = 1, 24 do
-      l_Iters[i] = l_FieldIter():stone_iterator(KBottomUp)
+   for i = l_low, l_high do
+      l_Iters[i] = self.mData.mFields:at(i):stone_iterator(KBottomUp)
    end
    return l_Iters
 end
 
 ----------------------------------------------------------------------------------
 
-function View:plot()
-   local l_lines = {}
-   l_lines[1] = UpperIndices()
-   l_lines[13] = LowerIndices()
-   local l_StoneIters = self:StoneIters()
-   for i = 2, 6 do
-      local l_SymbolTable = {}
-
-      for j = 13, 18 do
-	 local l_Stone = l_StoneIters[j]()
-	 local l_Symbol = l_Stone and l_Stone:Symbol() or " "
-	 table.insert(l_SymbolTable, l_Symbol.." ")
-      end
-      table.insert(l_SymbolTable, "|")
-      for j = 19, 24 do
-	 local l_Stone = l_StoneIters[j]()
-	 local l_Symbol = l_Stone and l_Stone:Symbol() or " "
-	 table.insert(l_SymbolTable, l_Symbol.." ")
-      end
-      l_lines[i] = table.concat(l_SymbolTable, " ")
-   end
-
-   l_lines[7] = ""
-
-   for i = 12, 8, -1 do
-      local l_SymbolTable = {}
-
-      for j = 12, 7,  -1 do
-	 local l_Stone = l_StoneIters[j]()
-	 local l_Symbol = l_Stone and l_Stone:Symbol() or " "
-	 table.insert(l_SymbolTable, l_Symbol.." ")
-      end
-      table.insert(l_SymbolTable, "|")
-      for j = 6, 1,  -1 do
-	 local l_Stone = l_StoneIters[j]()
-	 local l_Symbol = l_Stone and l_Stone:Symbol() or " "
-	 table.insert(l_SymbolTable, l_Symbol.." ")
-      end
-      l_lines[i] = table.concat(l_SymbolTable, " ")
-   end
-
-   l_lines[14] = "Geschlagene Steine:"
+function View:Beaten()
+   local l_line = "Geschlagene Steine:"
    local KUp = true
    for stone in self.mData.mOutField:stone_iterator(KUp) do
-      l_lines[14] = l_lines[14].." "..stone:Symbol()
+      l_line = l_line.." "..stone:Symbol()
    end
+   return l_line
+end
 
-   local l_DrawString = "ist am Zug und hat nutzbar Würfelwerte:"
-   local l_Player = self.mData.mCurrentPlayer
-   local l_Time = " , Spielzeit 0 s."
-   local l_AsTable = {l_Player, l_DrawString}
-   for i in self.mData.mDices.mDices:fwd_iterator() do
-      table.insert(l_AsTable, i)
+----------------------------------------------------------------------------------
+
+function View:Info()
+   local l_Table = {}
+   l_Table[1] = self.mData.mCurrentPlayer.." ist am Zug und hat nutzbare Würfelwerte:"
+   for val in self.mData.mDices.mDices:fwd_iterator() do
+      table.insert(l_Table, val)
    end
-   table.insert(l_AsTable, l_Time)
-   l_lines[15] = table.concat( l_AsTable, " ")
+   local l_TimeString = " , Spielzeit"..self.mData:TimeDiff().." s."
+   table.insert(l_Table, l_TimeString)
+   return table.concat(l_Table, " ")
+end
 
-   for _, v in ipairs(l_lines) do
+----------------------------------------------------------------------------------
+
+function View:plot()
+   local KUpper = true
+   local l_UpperBar = {UpperIndices()}
+   local l_UpperHalf = self:PlotHalf(KUpper)
+   local l_LowerHalf = self:PlotHalf(not KUpper)
+   local l_LowerBar = {LowerIndices()}
+   local l_FreeLine = {""}
+   local l_Beaten = {self:Beaten()}
+   local l_Info = {self:Info()}
+
+   local l_lines = Join(l_UpperBar, l_UpperHalf, l_FreeLine,
+	l_LowerHalf, l_LowerBar, l_Beaten, l_Info)
+
+   for _, v in pairs(l_lines) do
       print(v)
    end
+end
+
+----------------------------------------------------------------------------------
+
+function View:PlotHalf(Upper)
+   local l_lines  = {}
+   local l_Left = Upper and 13 or 12
+   local l_Right = Upper and 24 or 1
+   local l_Middle = Upper and 18 or 7
+   local l_StoneIters = self:StoneIters(l_Left, l_Right)
+   local l_Stride = Upper and 1 or -1
+
+   while true do
+      local l_SymbolTable = {}
+
+      for j = l_Left, l_Middle, l_Stride do
+	 local l_Stone = l_StoneIters[j]()
+	 local l_Symbol = l_Stone and l_Stone:Symbol() or " "
+	 table.insert(l_SymbolTable, l_Symbol.." ")
+      end
+      table.insert(l_SymbolTable, "|")
+      for j = l_Middle + l_Stride, l_Right, l_Stride do
+	 local l_Stone = l_StoneIters[j]()
+	 local l_Symbol = l_Stone and l_Stone:Symbol() or " "
+	 table.insert(l_SymbolTable, l_Symbol.." ")
+      end
+      local l_line = table.concat(l_SymbolTable, " ")
+      
+      if not l_line:find("%u") then 
+	 break
+      end
+      table.insert(l_lines, l_line)
+   end
+
+   return Upper and l_lines or Invert(l_lines)
 end

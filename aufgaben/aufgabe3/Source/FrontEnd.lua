@@ -18,8 +18,12 @@ end
 ----------------------------------------------------------------------------------
 
 function FrontEnd:start(Interactive)
+   self.mDisp:InitGame()
    if Interactive then
       self._class = Parser
+      local l_EndParse = 
+	 function() self:EndParsing() end
+      self.mDisp:SetEndParseCallback(Function:new(l_EndParse))
       self:Init()
       self:BeginParsing()
    else
@@ -90,10 +94,16 @@ end
 function Parser:BeginParsing()
    self.mParsing = true
    local input = self.GetLine()
-   while input do
+   while input and self.mParsing do
       self:TranslateInput(input)
       input = self.GetLine()
    end
+end
+
+----------------------------------------------------------------------------------
+
+function Parser:EndParsing()
+   self.mParsing = false
 end
 
 ----------------------------------------------------------------------------------
@@ -137,7 +147,8 @@ Aspect{"ParserCheck",
 
 function ParserCheck:MisMatch(str, pattern)
    if str:match(pattern.mPat) ~= str then
-      error("Syntax error, expected "..pattern.mPat.." got "..str)
+      print("Syntax error, expected "..pattern.mPat.." got "..str)
+      return false
    end
 end
 
@@ -164,6 +175,12 @@ end
 
 function Commander:print()
    self.mDisp:UpdateView()
+end
+
+----------------------------------------------------------------------------------
+
+function Commander:restart()
+   self.mDisp:RestartGame()
 end
 
 --================================================================================
@@ -197,6 +214,9 @@ function CommanderCheck:_CheckArgs(...)
 	 and l_ArgTypes[1] == "string"
          and l_args[1]:match(MoveArgRegEx) == l_args[1]
       l_expected = "moveStone(\"14 18\")"
+   elseif l_FuncName == "restart" then
+      l_confirmed = #l_ArgTypes == 0
+      l_expected = "restart()"
    end
 
    if not l_confirmed then
@@ -209,15 +229,32 @@ end
 --================================================================================
 
 Class{"MoveChecker"}
+----------------------------------------------------------------------------------
+local l_Enabled = false
+----------------------------------------------------------------------------------
 
 function MoveChecker:enable()
+   l_Enabled = true
    ParserCheck:enable()
    CommanderCheck:enable()
    RuleCheck:enable()
 end
 
+----------------------------------------------------------------------------------
+
 function MoveChecker:disable()
    RuleCheck:disable()
    CommanderCheck:disable()
    ParserCheck:disable()
+   l_Enabled = false
+end
+
+----------------------------------------------------------------------------------
+
+function MoveChecker:Toggle()
+   if l_Enabled then
+      self:disable()
+   else
+      self:enable()
+   end
 end
